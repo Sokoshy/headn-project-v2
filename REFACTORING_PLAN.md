@@ -319,25 +319,25 @@ Livrable technique : `docs/phase-3-refonte-persistence.md`
 
 ### Checklist
 
-- [ ] Convertir `Livre` en entite JPA
-- [ ] Convertir `Utilisateur` en entite JPA
-- [ ] Convertir `Emprunt` en entite JPA
-- [ ] Definir les relations entre entites
-- [ ] Creer les repositories Spring Data
-- [ ] Definir les contraintes de persistence
-- [ ] Identifier les requetes metier specifiques
-- [ ] Migrer progressivement les acces DAO vers les repositories
-- [ ] Supprimer les DAO devenus inutiles
-- [ ] Integrer Flyway
-- [ ] Creer les scripts SQL versionnes
-- [ ] Verifier l'alignement schema / entites
-- [ ] Encadrer la migration du schema sans dependre d'un `ddl-auto` implicite, en faisant de Flyway la source de verite pour les evolutions SQL
+- [x] Convertir `Livre` en entite JPA
+- [x] Convertir `Utilisateur` en entite JPA
+- [x] Convertir `Emprunt` en entite JPA
+- [x] Definir les relations entre entites
+- [x] Creer les repositories Spring Data
+- [x] Definir les contraintes de persistence
+- [x] Identifier les requetes metier specifiques
+- [x] Migrer progressivement les acces DAO vers les repositories
+- [x] Supprimer les DAO devenus inutiles
+- [x] Integrer Flyway
+- [x] Creer les scripts SQL versionnes
+- [x] Verifier l'alignement schema / entites
+- [x] Encadrer la migration du schema sans dependre d'un `ddl-auto` implicite, en faisant de Flyway la source de verite pour les evolutions SQL
 
 ### Critere de sortie
 
-- [ ] La persistence passe par JPA / repositories
-- [ ] Le schema est maitrise via migrations
-- [ ] Les DAO historiques peuvent etre retires progressivement
+- [x] La persistence passe par JPA / repositories
+- [x] Le schema est maitrise via migrations
+- [x] Les DAO historiques peuvent etre retires progressivement
 
 ---
 
