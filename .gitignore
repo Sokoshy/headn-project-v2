@@ -1,3 +1,37 @@
-# Ignorer le dossier de compilation Maven
+# Maven
 target/
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+*.launch
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Spring Boot
+spring-shell.log
+
+# Test
+surefire-reports/
+failsafe-reports/
+
+# Misc
 *.class
+*.bak
+*.tmp
+*.swp
+*~
