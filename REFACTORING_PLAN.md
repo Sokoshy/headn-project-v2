@@ -40,7 +40,7 @@ La priorite est la suivante :
 
 ### 2.1 Stack retenue
 
-- Java 26
+- Java 25
 - Maven 3.9
 - Spring Boot 4.0.4
 - Spring MVC
@@ -50,15 +50,15 @@ La priorite est la suivante :
 - PostgreSQL
 - Flyway
 
-### 2.2 Regle de fallback
+### 2.2 Decision de version Java
 
-- cible principale : `Java 26`
-- fallback autorise : `Java 25`
-- le fallback ne s'applique qu'en cas de blocage reel de compatibilite
+- version projet retenue : `Java 25`
+- la montee vers `Java 26` est reportee volontairement
+- le projet privilegie pour l'instant la stabilite de build et la reproductibilite locale
 
 ### 2.3 Contraintes validees
 
-- Spring Boot 4.0.4 est compatible jusqu'a Java 26 inclus
+- Spring Boot 4.0.4 est compatible avec Java 25
 - Maven 3.9 est compatible avec Spring Boot 4.0.4
 
 ---
@@ -269,29 +269,36 @@ Poser un nouveau socle applicatif moderne, standard et maintenable.
 
 ### Checklist
 
-- [ ] Creer l'application Spring Boot
-- [ ] Ajouter `@SpringBootApplication`
-- [ ] Configurer le packaging Maven
-- [ ] Creer `application.yml` en remplacement de `config.properties` et d'une partie de `DatabaseConfig.java`
-- [ ] Configurer l'environnement PostgreSQL
-- [ ] Ajouter `spring-boot-starter-web`
-- [ ] Ajouter `spring-boot-starter-thymeleaf`
-- [ ] Ajouter `spring-boot-starter-data-jpa`
-- [ ] Ajouter `spring-boot-starter-validation`
-- [ ] Ajouter `spring-boot-starter-security`
-- [ ] Ajouter `spring-boot-starter-test`
-- [ ] Ajouter le driver PostgreSQL
-- [ ] Ajouter Flyway
-- [ ] Supprimer les mecanismes d'initialisation historiques devenus inutiles (`web.xml`, configuration WAR/Cargo/Jetty, bootstrap manuel), puis retirer `CSRFUtil.java` seulement une fois Spring Security en place
-- [ ] Aligner `mise.toml` sur la nouvelle stack
-- [ ] Configurer `Java 26`
-- [ ] Prevoir le fallback `Java 25` uniquement si necessaire
+- [x] Creer l'application Spring Boot
+- [x] Ajouter `@SpringBootApplication`
+- [x] Configurer le packaging Maven
+- [x] Creer `application.yml` en remplacement de `config.properties` et d'une partie de `DatabaseConfig.java`
+- [x] Configurer l'environnement PostgreSQL
+- [x] Ajouter `spring-boot-starter-web`
+- [x] Ajouter `spring-boot-starter-thymeleaf`
+- [x] Ajouter `spring-boot-starter-data-jpa`
+- [x] Ajouter `spring-boot-starter-validation`
+- [x] Ajouter `spring-boot-starter-security`
+- [x] Ajouter `spring-boot-starter-test`
+- [x] Ajouter le driver PostgreSQL
+- [x] Ajouter Flyway
+- [x] Supprimer les mecanismes d'initialisation historiques devenus inutiles (`web.xml`, configuration WAR/Cargo/Jetty, bootstrap manuel), puis retirer `CSRFUtil.java` seulement une fois Spring Security en place
+- [x] Aligner `mise.toml` sur la nouvelle stack
+- [x] Configurer `Java 25`
+- [x] Reporter explicitement la migration vers `Java 26`
 
 ### Critere de sortie
 
-- [ ] L'application demarre sous Spring Boot
-- [ ] Le build Maven est coherent
-- [ ] La stack cible est en place
+- [x] L'application demarre sous Spring Boot
+- [x] Le build Maven est coherent
+- [x] La stack cible est en place
+
+### Note d'implementation
+
+- Le projet est aligne integralement sur `Java 25` pour garantir un build propre, un demarrage valide et une execution reproductible dans l'environnement actuel.
+- La migration vers `Java 26` est reportee volontairement a une phase ulterieure, une fois l'environnement et la chaine de build completement stabilises.
+
+Livrable technique : `docs/phase-2-socle-spring-boot.md`
 
 ---
 
@@ -584,24 +591,24 @@ Le design doit etre :
 
 ### Checklist environnement
 
-- [ ] Fixer `Java 26` comme cible principale
-- [ ] Conserver `Java 25` comme fallback eventuel
-- [ ] Fixer `Maven 3.9`
-- [ ] Fixer `Spring Boot 4.0.4`
-- [ ] Utiliser PostgreSQL
-- [ ] Utiliser Flyway pour les migrations
+- [x] Fixer `Java 25` comme cible du projet
+- [x] Reporter l'upgrade vers `Java 26`
+- [x] Fixer `Maven 3.9`
+- [x] Fixer `Spring Boot 4.0.4`
+- [x] Utiliser PostgreSQL
+- [x] Utiliser Flyway pour les migrations
 
 ### Checklist `mise.toml`
 
-- [ ] `java = "26"`
-- [ ] `maven = "3.9"`
-- [ ] `dev -> mvn spring-boot:run` (remplace `mvn jetty:run`)
-- [ ] `build -> mvn clean package`
-- [ ] `start -> mvn spring-boot:run` (remplace `mvn cargo:run`)
-- [ ] `test -> mvn test`
-- [ ] `test:all -> mvn verify`
-- [ ] `db -> docker compose up -d`
-- [ ] `db:stop -> docker compose down`
+- [x] `java = "25"`
+- [x] `maven = "3.9"`
+- [x] `dev -> mvn spring-boot:run` (remplace `mvn jetty:run`)
+- [x] `build -> mvn clean package`
+- [x] `start -> mvn spring-boot:run` (remplace `mvn cargo:run`)
+- [x] `test -> mvn test`
+- [x] `test:all -> mvn verify`
+- [x] `db -> docker compose up -d`
+- [x] `db:stop -> docker compose down`
 
 ---
 
