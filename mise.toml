@@ -1,0 +1,15 @@
+[tools]
+java = "25"
+maven = "3.9"
+
+[tasks.dev]
+run = "mvn jetty:run"
+
+[tasks.build]
+run = "mvn clean package"
+
+[tasks.start]
+run = "mvn cargo:run"
+
+[tasks.test]
+run = "mvn test"
