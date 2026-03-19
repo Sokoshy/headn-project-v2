@@ -205,6 +205,13 @@ La page Emprunts doit mettre en avant :
 
 ## 7. Plan de refactoring detaille
 
+### Regle de livrable par phase
+
+- Chaque phase doit se conclure par un livrable technique ecrit.
+- Ce livrable doit etre ajoute dans le dossier `docs`.
+- Le nommage doit suivre la structure deja utilisee par les documents existants, sous la forme `docs/phase-X-<intitule>.md`.
+- Le livrable doit resumer les decisions prises, les changements effectues, les validations realisees et les points reportes a la phase suivante.
+
 ### Phase 0 - Cadrage UX, navigation et architecture d'information
 
 ### Objectif
@@ -308,6 +315,8 @@ Livrable technique : `docs/phase-2-socle-spring-boot.md`
 
 Remplacer les DAO manuels par une couche persistence standardisee.
 
+Livrable technique : `docs/phase-3-refonte-persistence.md`
+
 ### Checklist
 
 - [ ] Convertir `Livre` en entite JPA
@@ -337,6 +346,8 @@ Remplacer les DAO manuels par une couche persistence standardisee.
 ### Objectif
 
 Centraliser toutes les regles metier dans des services clairs.
+
+Livrable technique : `docs/phase-4-refonte-logique-metier.md`
 
 ### Checklist
 
@@ -368,6 +379,8 @@ Centraliser toutes les regles metier dans des services clairs.
 ### Objectif
 
 Construire une couche web claire, coherent et alignee sur les usages.
+
+Livrable technique : `docs/phase-5-controllers-routes.md`
 
 ### Checklist
 
@@ -401,6 +414,8 @@ Construire une couche web claire, coherent et alignee sur les usages.
 ### Objectif
 
 Refondre les pages et composants pour obtenir une experience simple, ordonnee et professionnelle.
+
+Livrable technique : `docs/phase-6-refonte-ui-ux.md`
 
 ### Checklist layout global
 
@@ -471,6 +486,8 @@ Refondre les pages et composants pour obtenir une experience simple, ordonnee et
 
 Garantir la qualite d'usage sur tous les formats et ameliorer l'accessibilite.
 
+Livrable technique : `docs/phase-7-responsive-accessibilite.md`
+
 ### Checklist
 
 - [ ] Adopter une approche mobile first
@@ -498,6 +515,8 @@ Garantir la qualite d'usage sur tous les formats et ameliorer l'accessibilite.
 
 Fiabiliser la securite et la gestion globale des erreurs.
 
+Livrable technique : `docs/phase-8-securite-robustesse.md`
+
 ### Checklist
 
 - [ ] Integrer Spring Security
@@ -524,6 +543,8 @@ Fiabiliser la securite et la gestion globale des erreurs.
 ### Objectif
 
 Valider la qualite finale et retirer proprement l'ancien socle.
+
+Livrable technique : `docs/phase-9-tests-validation-nettoyage.md`
 
 ### Checklist tests
 
