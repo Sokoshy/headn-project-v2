@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: bibliotheque-app
+
+  # Configuration de la base de données PostgreSQL
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bibliotheque
+    username: admin
+    password: password123
+    driver-class-name: org.postgresql.Driver
+
+  # Configuration JPA / Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Configuration Flyway
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
+  # Configuration Thymeleaf
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+
+# Configuration du serveur
+server:
+  port: 8080
+  servlet:
+    context-path: /bibliotheque
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Configuration des logs
+logging:
+  level:
+    root: INFO
+    com.bibliotheque: DEBUG
+    org.springframework: INFO
+    org.hibernate: INFO
+    org.flywaydb: INFO
+
+# Configuration du pool de connexions HikariCP
+spring.datasource.hikari:
+  maximum-pool-size: 10
+  minimum-idle: 2
+  connection-timeout: 30000
+  idle-timeout: 600000
+  max-lifetime: 1800000
