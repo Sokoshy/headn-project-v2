@@ -1,148 +1,131 @@
 package com.bibliotheque.model;
 
-import java.time.LocalDate;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.NotNull;
 
+import java.time.LocalDate;
+import java.util.Objects;
+
+@Entity
+@Table(name = "emprunts", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"livre_id", "date_retour"})
+})
 public class Emprunt {
-    private int id;
-    private int utilisateurId;
-    private int livreId;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotNull(message = "L'utilisateur est obligatoire")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utilisateur_id", nullable = false)
+    private Utilisateur utilisateur;
+
+    @NotNull(message = "Le livre est obligatoire")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "livre_id", nullable = false)
+    private Livre livre;
+
+    @NotNull(message = "La date d'emprunt est obligatoire")
+    @Column(name = "date_emprunt", nullable = false)
     private LocalDate dateEmprunt;
+
+    @Column(name = "date_retour")
     private LocalDate dateRetour;
-    
-    // Champs additionnels pour les jointures
-    private String nomUtilisateur;
-    private String emailUtilisateur;
-    private String titreLivre;
-    private String auteurLivre;
-    
-    // Constructeurs
-    public Emprunt() {}
-    
-    public Emprunt(int utilisateurId, int livreId) {
-        this.utilisateurId = utilisateurId;
-        this.livreId = livreId;
+
+    public Emprunt() {
+    }
+
+    public Emprunt(Utilisateur utilisateur, Livre livre) {
+        this.utilisateur = utilisateur;
+        this.livre = livre;
         this.dateEmprunt = LocalDate.now();
     }
-    
-    public Emprunt(int id, int utilisateurId, int livreId, LocalDate dateEmprunt, LocalDate dateRetour) {
-        this.id = id;
-        this.utilisateurId = utilisateurId;
-        this.livreId = livreId;
-        this.dateEmprunt = dateEmprunt;
-        this.dateRetour = dateRetour;
-    }
-    
-    // Getters et Setters
-    public int getId() {
+
+    public Long getId() {
         return id;
     }
-    
-    public void setId(int id) {
+
+    public void setId(Long id) {
         this.id = id;
     }
-    
-    public int getUtilisateurId() {
-        return utilisateurId;
+
+    public Utilisateur getUtilisateur() {
+        return utilisateur;
     }
-    
-    public void setUtilisateurId(int utilisateurId) {
-        this.utilisateurId = utilisateurId;
+
+    public void setUtilisateur(Utilisateur utilisateur) {
+        this.utilisateur = utilisateur;
     }
-    
-    public int getLivreId() {
-        return livreId;
+
+    public Livre getLivre() {
+        return livre;
     }
-    
-    public void setLivreId(int livreId) {
-        this.livreId = livreId;
+
+    public void setLivre(Livre livre) {
+        this.livre = livre;
     }
-    
+
     public LocalDate getDateEmprunt() {
         return dateEmprunt;
     }
-    
+
     public void setDateEmprunt(LocalDate dateEmprunt) {
         this.dateEmprunt = dateEmprunt;
     }
-    
+
     public LocalDate getDateRetour() {
         return dateRetour;
     }
-    
+
     public void setDateRetour(LocalDate dateRetour) {
         this.dateRetour = dateRetour;
     }
-    
-    public String getNomUtilisateur() {
-        return nomUtilisateur;
-    }
-    
-    public void setNomUtilisateur(String nomUtilisateur) {
-        this.nomUtilisateur = nomUtilisateur;
-    }
-    
-    public String getEmailUtilisateur() {
-        return emailUtilisateur;
-    }
-    
-    public void setEmailUtilisateur(String emailUtilisateur) {
-        this.emailUtilisateur = emailUtilisateur;
-    }
-    
-    public String getTitreLivre() {
-        return titreLivre;
-    }
-    
-    public void setTitreLivre(String titreLivre) {
-        this.titreLivre = titreLivre;
-    }
-    
-    public String getAuteurLivre() {
-        return auteurLivre;
-    }
-    
-    public void setAuteurLivre(String auteurLivre) {
-        this.auteurLivre = auteurLivre;
-    }
-    
-    // Méthodes utilitaires
+
     public boolean estEnCours() {
         return dateRetour == null;
     }
-    
+
     public boolean estEnRetard() {
         if (dateRetour != null) return false;
         return dateEmprunt.plusDays(30).isBefore(LocalDate.now());
     }
-    
+
     public long getNombreJoursEmprunt() {
         LocalDate dateFin = dateRetour != null ? dateRetour : LocalDate.now();
         return dateEmprunt.until(dateFin).getDays();
     }
-    
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Emprunt emprunt = (Emprunt) o;
+        return Objects.equals(id, emprunt.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
     @Override
     public String toString() {
         return "Emprunt{" +
                 "id=" + id +
-                ", utilisateurId=" + utilisateurId +
-                ", livreId=" + livreId +
+                ", utilisateur=" + (utilisateur != null ? utilisateur.getId() : null) +
+                ", livre=" + (livre != null ? livre.getId() : null) +
                 ", dateEmprunt=" + dateEmprunt +
                 ", dateRetour=" + dateRetour +
-                ", nomUtilisateur='" + nomUtilisateur + '\'' +
-                ", titreLivre='" + titreLivre + '\'' +
                 '}';
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        Emprunt emprunt = (Emprunt) obj;
-        return id == emprunt.id;
-    }
-    
-    @Override
-    public int hashCode() {
-        return Integer.hashCode(id);
     }
 }
