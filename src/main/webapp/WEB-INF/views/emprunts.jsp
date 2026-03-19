@@ -103,11 +103,11 @@
                                     <td><c:out value="${emprunt.dateEmprunt}"/></td>
                                     <td>
                                         <form method="post" action="${pageContext.request.contextPath}/emprunts" style="display:inline;">
-                                            <input type="hidden" name="action" value="return"/>
+                                            <input type="hidden" name="action" value="retour"/>
                                             <input type="hidden" name="id" value="<c:out value="${emprunt.id}"/>"/>
                                             <%= com.bibliotheque.config.CSRFUtil.getHiddenField(request) %>
                                             <button type="submit" class="btn btn-success btn-small">
-                                                ✅ Retourner le livre
+                                                ✅ Enregistrer le retour
                                             </button>
                                         </form>
                                     </td>

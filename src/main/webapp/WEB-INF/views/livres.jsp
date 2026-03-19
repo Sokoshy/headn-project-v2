@@ -48,7 +48,7 @@
             }
 
             // Scroll vers la section d'édition si applicable
-            <c:if test="${not empty utilisateur}">
+            <c:if test="${not empty livre}">
             setTimeout(function() {
                 const editSection = document.querySelector('.section-edit');
                 if (editSection) {
@@ -160,7 +160,7 @@
         </div>
 
         <!-- Section EDITION (conditionnelle) -->
-        <c:if test="${not empty utilisateur}">
+        <c:if test="${not empty livre}">
             <div class="section section-edit">
                 <div class="section-header">
                     <h2 class="section-title">
@@ -172,20 +172,32 @@
                 <div class="card card-edit">
                     <form action="${pageContext.request.contextPath}/livres" method="post" novalidate>
                         <input type="hidden" name="action" value="update"/>
-                        <input type="hidden" name="id" value="<c:out value="${utilisateur.id}"/>"/>
+                        <input type="hidden" name="id" value="<c:out value="${livre.id}"/>"/>
+                        <input type="hidden" name="disponible" value="<c:out value="${livre.disponible}"/>"/>
                         <%= com.bibliotheque.config.CSRFUtil.getHiddenField(request) %>
                         <div class="form-grid">
                             <div class="form-field">
                                 <label for="edit-titre-livre">📖 Titre du livre *</label>
                                 <input type="text" id="edit-titre-livre" name="titre" class="form-control"
-                                       value="<c:out value="${utilisateur.titre}"/>" required aria-required="true"/>
+                                       value="<c:out value="${livre.titre}"/>" required aria-required="true"/>
                             </div>
                             <div class="form-field">
                                 <label for="edit-auteur-livre">👤 Auteur *</label>
                                 <input type="text" id="edit-auteur-livre" name="auteur" class="form-control"
-                                       value="<c:out value="${utilisateur.auteur}"/>" required aria-required="true"/>
+                                       value="<c:out value="${livre.auteur}"/>" required aria-required="true"/>
                             </div>
                         </div>
+                        <p class="section-description">
+                            Statut actuel :
+                            <c:choose>
+                                <c:when test="${livre.disponible}">
+                                    <span class="status-badge status-available">Disponible</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="status-badge status-unavailable">Emprunte</span>
+                                </c:otherwise>
+                            </c:choose>
+                        </p>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-warning">💾 Enregistrer les modifications</button>
                             <a href="${pageContext.request.contextPath}/livres" class="btn btn-secondary">❌ Annuler</a>
