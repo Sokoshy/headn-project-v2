@@ -1,5 +1,7 @@
 package com.bibliotheque.servlet;
 
+import com.bibliotheque.config.CSRFUtil;
+import com.bibliotheque.config.FlashMessageUtil;
 import com.bibliotheque.service.UtilisateurService;
 import com.bibliotheque.service.ServiceResult;
 import com.bibliotheque.model.Utilisateur;
@@ -9,9 +11,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
 
 @WebServlet("/utilisateurs")
@@ -28,28 +28,13 @@ public class UtilisateurServlet extends HttpServlet {
             throws ServletException, IOException {
         String action = request.getParameter("action");
         if (action == null) action = "list";
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            String message = (String) session.getAttribute("message");
-            String error = (String) session.getAttribute("error");
-            if (message != null) {
-                request.setAttribute("message", message);
-                session.removeAttribute("message");
-            }
-            if (error != null) {
-                request.setAttribute("error", error);
-                session.removeAttribute("error");
-            }
-        }
+        FlashMessageUtil.consume(request);
         switch (action) {
             case "list":
                 listerUtilisateurs(request, response);
                 break;
             case "edit":
                 afficherFormulaireEdit(request, response);
-                break;
-            case "delete":
-                supprimerUtilisateur(request, response);
                 break;
             default:
                 listerUtilisateurs(request, response);
@@ -59,6 +44,11 @@ public class UtilisateurServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        if (!CSRFUtil.validateToken(request)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Token CSRF invalide");
+            return;
+        }
+
         String action = request.getParameter("action");
         if (action == null) action = "add";
 
@@ -68,6 +58,9 @@ public class UtilisateurServlet extends HttpServlet {
                 break;
             case "update":
                 modifierUtilisateur(request, response);
+                break;
+            case "delete":
+                supprimerUtilisateur(request, response);
                 break;
             default:
                 ajouterUtilisateur(request, response);
@@ -82,6 +75,7 @@ public class UtilisateurServlet extends HttpServlet {
         } else {
             request.setAttribute("error", result.getMessage());
         }
+        CSRFUtil.generateToken(request);
         request.getRequestDispatcher("/WEB-INF/views/utilisateurs.jsp").forward(request, response);
     }
 
@@ -89,13 +83,12 @@ public class UtilisateurServlet extends HttpServlet {
             throws ServletException, IOException {
         String nom = request.getParameter("nom");
         String email = request.getParameter("email");
-        HttpSession session = request.getSession();
 
         ServiceResult<Utilisateur> result = utilisateurService.ajouterUtilisateur(nom, email);
         if (result.isSuccess()) {
-            session.setAttribute("message", result.getMessage());
+            FlashMessageUtil.success(request, normalizeMessage(result.getMessage()));
         } else {
-            session.setAttribute("error", result.getMessage());
+            FlashMessageUtil.error(request, normalizeMessage(result.getMessage()));
         }
         response.sendRedirect(request.getContextPath() + "/utilisateurs");
     }
@@ -107,6 +100,7 @@ public class UtilisateurServlet extends HttpServlet {
             ServiceResult<Utilisateur> result = utilisateurService.getUtilisateurById(idStr);
             if (result.isSuccess()) {
                 request.setAttribute("utilisateur", result.getData());
+                CSRFUtil.generateToken(request);
                 request.getRequestDispatcher("/WEB-INF/views/utilisateurs.jsp").forward(request, response);
                 return;
             }
@@ -119,13 +113,12 @@ public class UtilisateurServlet extends HttpServlet {
         String idStr = request.getParameter("id");
         String nom = request.getParameter("nom");
         String email = request.getParameter("email");
-        HttpSession session = request.getSession();
 
         ServiceResult<Utilisateur> result = utilisateurService.modifierUtilisateur(idStr, nom, email);
         if (result.isSuccess()) {
-            session.setAttribute("message", result.getMessage());
+            FlashMessageUtil.success(request, normalizeMessage(result.getMessage()));
         } else {
-            session.setAttribute("error", result.getMessage());
+            FlashMessageUtil.error(request, normalizeMessage(result.getMessage()));
         }
         response.sendRedirect(request.getContextPath() + "/utilisateurs");
     }
@@ -133,14 +126,25 @@ public class UtilisateurServlet extends HttpServlet {
     private void supprimerUtilisateur(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String idStr = request.getParameter("id");
-        HttpSession session = request.getSession();
 
         ServiceResult<Boolean> result = utilisateurService.supprimerUtilisateur(idStr);
         if (result.isSuccess()) {
-            session.setAttribute("message", result.getMessage());
+            FlashMessageUtil.success(request, normalizeMessage(result.getMessage()));
         } else {
-            session.setAttribute("error", result.getMessage());
+            FlashMessageUtil.error(request, normalizeMessage(result.getMessage()));
         }
         response.sendRedirect(request.getContextPath() + "/utilisateurs");
+    }
+
+    private String normalizeMessage(String message) {
+        if (message == null) {
+            return null;
+        }
+
+        if (message.endsWith("!")) {
+            return message.substring(0, message.length() - 1) + ".";
+        }
+
+        return message;
     }
 }

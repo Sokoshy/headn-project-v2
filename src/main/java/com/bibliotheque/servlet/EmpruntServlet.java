@@ -1,5 +1,7 @@
 package com.bibliotheque.servlet;
 
+import com.bibliotheque.config.CSRFUtil;
+import com.bibliotheque.config.FlashMessageUtil;
 import com.bibliotheque.dao.EmpruntDAO;
 import com.bibliotheque.dao.LivreDAO;
 import com.bibliotheque.dao.UtilisateurDAO;
@@ -12,7 +14,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -36,20 +37,7 @@ public class EmpruntServlet extends HttpServlet {
             throws ServletException, IOException {
         String action = request.getParameter("action");
         if (action == null) action = "list";
-        // Récupérer les messages de la session (pour affichage après redirection)
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            String message = (String) session.getAttribute("message");
-            String error = (String) session.getAttribute("error");
-            if (message != null) {
-                request.setAttribute("message", message);
-                session.removeAttribute("message");
-            }
-            if (error != null) {
-                request.setAttribute("error", error);
-                session.removeAttribute("error");
-            }
-        }
+        FlashMessageUtil.consume(request);
         try {
             switch (action) {
                 case "list":
@@ -69,6 +57,11 @@ public class EmpruntServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        if (!CSRFUtil.validateToken(request)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Token CSRF invalide");
+            return;
+        }
+
         String action = request.getParameter("action");
         if (action == null) action = "add";
         try {
@@ -89,8 +82,8 @@ public class EmpruntServlet extends HttpServlet {
 
     private void listerEmpruntsActifs(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SQLException {
-        
         List<Emprunt> emprunts;
+        List<Emprunt> historique = empruntDAO.getHistoriqueEmprunts();
         List<Utilisateur> utilisateurs = utilisateurDAO.getAllUtilisateurs();
         List<Livre> livresDisponibles = livreDAO.getLivresDisponibles();
 
@@ -107,20 +100,25 @@ public class EmpruntServlet extends HttpServlet {
             emprunts = empruntDAO.getEmpruntsActifs();
         }
 
-    request.setAttribute("emprunts", emprunts);
-    request.setAttribute("utilisateurs", utilisateurs);
-    request.setAttribute("livresDisponibles", livresDisponibles);
-    request.getRequestDispatcher("/WEB-INF/views/emprunts.jsp").forward(request, response);
-}
+        request.setAttribute("emprunts", emprunts);
+        request.setAttribute("historique", historique);
+        request.setAttribute("utilisateurs", utilisateurs);
+        request.setAttribute("livresDisponibles", livresDisponibles);
+        CSRFUtil.generateToken(request);
+        request.getRequestDispatcher("/WEB-INF/views/emprunts.jsp").forward(request, response);
+    }
 
     private void listerHistorique(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SQLException {
-        List<Emprunt> emprunts = empruntDAO.getHistoriqueEmprunts();
+        List<Emprunt> emprunts = empruntDAO.getEmpruntsActifs();
+        List<Emprunt> historique = empruntDAO.getHistoriqueEmprunts();
         List<Utilisateur> utilisateurs = utilisateurDAO.getAllUtilisateurs();
         List<Livre> livresDisponibles = livreDAO.getLivresDisponibles();
         request.setAttribute("emprunts", emprunts);
+        request.setAttribute("historique", historique);
         request.setAttribute("utilisateurs", utilisateurs);
         request.setAttribute("livresDisponibles", livresDisponibles);
+        CSRFUtil.generateToken(request);
         request.getRequestDispatcher("/WEB-INF/views/emprunts.jsp").forward(request, response);
     }
 
@@ -128,7 +126,6 @@ public class EmpruntServlet extends HttpServlet {
             throws ServletException, IOException, SQLException {
         String utilisateurIdStr = request.getParameter("utilisateurId");
         String livreIdStr = request.getParameter("livreId");
-        HttpSession session = request.getSession();
         if (utilisateurIdStr != null && livreIdStr != null) {
             try {
                 int utilisateurId = Integer.parseInt(utilisateurIdStr);
@@ -136,23 +133,22 @@ public class EmpruntServlet extends HttpServlet {
                 Emprunt emprunt = new Emprunt(utilisateurId, livreId);
                 if (empruntDAO.ajouterEmprunt(emprunt)) {
                     livreDAO.updateDisponibilite(livreId, false);
-                    session.setAttribute("message", "Emprunt enregistré !");
+                    FlashMessageUtil.success(request, "Emprunt enregistre.");
                 } else {
-                    session.setAttribute("error", "Erreur lors de l'emprunt.");
+                    FlashMessageUtil.error(request, "Erreur lors de l'enregistrement de l'emprunt.");
                 }
             } catch (NumberFormatException e) {
-                session.setAttribute("error", "Identifiants invalides.");
+                FlashMessageUtil.error(request, "Identifiants invalides.");
             }
         } else {
-            session.setAttribute("error", "Paramètres manquants.");
+            FlashMessageUtil.error(request, "Parametres manquants.");
         }
         response.sendRedirect(request.getContextPath() + "/emprunts");
     }
 
     private void enregistrerRetour(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SQLException {
-        String empruntIdStr = request.getParameter("empruntId");
-        HttpSession session = request.getSession();
+        String empruntIdStr = request.getParameter("id");
         if (empruntIdStr != null) {
             try {
                 int empruntId = Integer.parseInt(empruntIdStr);
@@ -162,15 +158,15 @@ public class EmpruntServlet extends HttpServlet {
                     if (livreId != null) {
                         livreDAO.updateDisponibilite(livreId, true);
                     }
-                    session.setAttribute("message", "Retour enregistré !");
+                    FlashMessageUtil.success(request, "Retour enregistre.");
                 } else {
-                    session.setAttribute("error", "Erreur lors de l'enregistrement du retour.");
+                    FlashMessageUtil.error(request, "Erreur lors de l'enregistrement du retour.");
                 }
             } catch (NumberFormatException e) {
-                session.setAttribute("error", "Identifiant d'emprunt invalide.");
+                FlashMessageUtil.error(request, "Identifiant d'emprunt invalide.");
             }
         } else {
-            session.setAttribute("error", "Paramètre manquant.");
+            FlashMessageUtil.error(request, "Parametre manquant.");
         }
         response.sendRedirect(request.getContextPath() + "/emprunts");
     }

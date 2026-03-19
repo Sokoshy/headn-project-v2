@@ -1,6 +1,7 @@
 package com.bibliotheque.servlet;
 
 import com.bibliotheque.config.CSRFUtil;
+import com.bibliotheque.config.FlashMessageUtil;
 import com.bibliotheque.config.ValidationUtil;
 import com.bibliotheque.dao.LivreDAO;
 import com.bibliotheque.model.Livre;
@@ -29,6 +30,8 @@ public class LivreServlet extends HttpServlet {
         
         String action = request.getParameter("action");
         if (action == null) action = "list";
+
+        FlashMessageUtil.consume(request);
         
         try {
             switch (action) {
@@ -43,9 +46,6 @@ public class LivreServlet extends HttpServlet {
                     break;
                 case "edit":
                     afficherFormulaireEdit(request, response);
-                    break;
-                case "delete":
-                    supprimerLivre(request, response);
                     break;
                 default:
                     listerLivres(request, response);
@@ -75,6 +75,9 @@ public class LivreServlet extends HttpServlet {
                     break;
                 case "update":
                     modifierLivre(request, response);
+                    break;
+                case "delete":
+                    supprimerLivre(request, response);
                     break;
                 default:
                     ajouterLivre(request, response);
@@ -126,21 +129,20 @@ public class LivreServlet extends HttpServlet {
         String titre = ValidationUtil.sanitizeInput(request.getParameter("titre"));
         String auteur = ValidationUtil.sanitizeInput(request.getParameter("auteur"));
         if (!ValidationUtil.isNotEmpty(titre) || !ValidationUtil.isNotEmpty(auteur)) {
-            request.setAttribute("error", "Titre et auteur sont obligatoires.");
+            FlashMessageUtil.error(request, "Le titre et l'auteur sont obligatoires.");
         } else if (!ValidationUtil.isValidTitre(titre)) {
-            request.setAttribute("error", "Titre invalide. Le titre doit contenir entre 1 et 200 caractères.");
+            FlashMessageUtil.error(request, "Titre invalide. Le titre doit contenir entre 1 et 200 caracteres.");
         } else if (!ValidationUtil.isValidAuteur(auteur)) {
-            request.setAttribute("error", "Auteur invalide. Le nom doit contenir entre 2 et 100 caractères.");
+            FlashMessageUtil.error(request, "Auteur invalide. Le nom doit contenir entre 2 et 100 caracteres.");
         } else {
             Livre livre = new Livre(titre, auteur);
             if (livreDAO.ajouterLivre(livre)) {
-                request.setAttribute("message", "Livre ajouté avec succès!");
+                FlashMessageUtil.success(request, "Livre ajoute avec succes.");
             } else {
-                request.setAttribute("error", "Erreur lors de l'ajout du livre.");
+                FlashMessageUtil.error(request, "Erreur lors de l'ajout du livre.");
             }
         }
-        CSRFUtil.generateToken(request);
-        listerLivres(request, response);
+        response.sendRedirect(request.getContextPath() + "/livres");
     }
     
     private void modifierLivre(HttpServletRequest request, HttpServletResponse response) 
@@ -160,15 +162,15 @@ public class LivreServlet extends HttpServlet {
                 
                 Livre livre = new Livre(id, titre.trim(), auteur.trim(), disponible);
                 if (livreDAO.modifierLivre(livre)) {
-                    request.setAttribute("message", "Livre modifié avec succès!");
+                    FlashMessageUtil.success(request, "Livre modifie avec succes.");
                 } else {
-                    request.setAttribute("error", "Erreur lors de la modification du livre.");
+                    FlashMessageUtil.error(request, "Erreur lors de la modification du livre.");
                 }
             } catch (NumberFormatException e) {
-                request.setAttribute("error", "ID du livre invalide.");
+                FlashMessageUtil.error(request, "Identifiant de livre invalide.");
             }
         } else {
-            request.setAttribute("error", "Tous les champs sont obligatoires.");
+            FlashMessageUtil.error(request, "Tous les champs du livre sont obligatoires.");
         }
         response.sendRedirect(request.getContextPath() + "/livres");
     }
@@ -183,6 +185,7 @@ public class LivreServlet extends HttpServlet {
                 Livre livre = livreDAO.getLivreById(id);
                 if (livre != null) {
                     request.setAttribute("livre", livre);
+                    CSRFUtil.generateToken(request);
                     request.getRequestDispatcher("/WEB-INF/views/livres.jsp").forward(request, response);
                     return;
                 }
@@ -201,12 +204,12 @@ public class LivreServlet extends HttpServlet {
             try {
                 int id = Integer.parseInt(idStr);
                 if (livreDAO.supprimerLivre(id)) {
-                    request.setAttribute("message", "Livre supprimé avec succès!");
+                    FlashMessageUtil.success(request, "Livre supprime avec succes.");
                 } else {
-                    request.setAttribute("error", "Erreur lors de la suppression du livre.");
+                    FlashMessageUtil.error(request, "Erreur lors de la suppression du livre.");
                 }
             } catch (NumberFormatException e) {
-                request.setAttribute("error", "ID du livre invalide.");
+                FlashMessageUtil.error(request, "Identifiant de livre invalide.");
             }
         }
         response.sendRedirect(request.getContextPath() + "/livres");
