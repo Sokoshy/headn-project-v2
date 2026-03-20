@@ -9,16 +9,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
-@Table(name = "emprunts", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"livre_id", "date_retour"})
-})
+@Table(name = "emprunts")
 public class Emprunt {
 
     @Id
@@ -102,7 +99,7 @@ public class Emprunt {
 
     public long getNombreJoursEmprunt() {
         LocalDate dateFin = dateRetour != null ? dateRetour : LocalDate.now();
-        return dateEmprunt.until(dateFin).getDays();
+        return java.time.temporal.ChronoUnit.DAYS.between(dateEmprunt, dateFin);
     }
 
     @Override

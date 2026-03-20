@@ -24,7 +24,17 @@ public interface EmpruntRepository extends JpaRepository<Emprunt, Long> {
 
     List<Emprunt> findByUtilisateurOrderByDateEmpruntDesc(Utilisateur utilisateur);
 
+    List<Emprunt> findByUtilisateurAndDateRetourIsNull(Utilisateur utilisateur);
+
     List<Emprunt> findByLivreAndDateRetourIsNull(Livre livre);
+
+    boolean existsByLivreAndDateRetourIsNull(Livre livre);
+
+    boolean existsByLivreIdAndDateRetourIsNull(Long livreId);
+
+    boolean existsByLivre(Livre livre);
+
+    boolean existsByUtilisateur(Utilisateur utilisateur);
 
     @Query("SELECT e FROM Emprunt e WHERE e.dateRetour IS NULL AND e.dateEmprunt < :date")
     List<Emprunt> findEmpruntsEnRetard(@Param("date") LocalDate date);
@@ -37,4 +47,9 @@ public interface EmpruntRepository extends JpaRepository<Emprunt, Long> {
 
     @Query("SELECT e FROM Emprunt e JOIN FETCH e.utilisateur JOIN FETCH e.livre WHERE e.dateRetour IS NOT NULL ORDER BY e.dateRetour DESC")
     List<Emprunt> findHistorique();
+
+    long countByDateRetourIsNull();
+
+    @Query("SELECT COUNT(e) FROM Emprunt e WHERE e.dateRetour IS NULL AND e.dateEmprunt < :date")
+    long countEmpruntsEnRetard(@Param("date") LocalDate date);
 }
