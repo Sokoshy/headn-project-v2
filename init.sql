@@ -1,7 +1,7 @@
 
 -- Table des livres
 CREATE TABLE IF NOT EXISTS livres (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     titre VARCHAR(255) NOT NULL,
     auteur VARCHAR(255) NOT NULL,
     disponible BOOLEAN DEFAULT TRUE,
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS livres (
 
 -- Table des utilisateurs
 CREATE TABLE IF NOT EXISTS utilisateurs (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     nom VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     date_inscription TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -18,13 +18,16 @@ CREATE TABLE IF NOT EXISTS utilisateurs (
 
 -- Table des emprunts
 CREATE TABLE IF NOT EXISTS emprunts (
-    id SERIAL PRIMARY KEY,
-    utilisateur_id INTEGER REFERENCES utilisateurs(id) ON DELETE CASCADE,
-    livre_id INTEGER REFERENCES livres(id) ON DELETE CASCADE,
+    id BIGSERIAL PRIMARY KEY,
+    utilisateur_id BIGINT NOT NULL REFERENCES utilisateurs(id) ON DELETE RESTRICT,
+    livre_id BIGINT NOT NULL REFERENCES livres(id) ON DELETE RESTRICT,
     date_emprunt DATE NOT NULL DEFAULT CURRENT_DATE,
-    date_retour DATE,
-    UNIQUE(livre_id, date_retour) -- Un livre ne peut être emprunté qu'une fois à la fois (si date_retour est NULL)
+    date_retour DATE
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_emprunts_livre_actif_unique
+    ON emprunts (livre_id)
+    WHERE date_retour IS NULL;
 
 -- Insertion des données de test pour les livres
 INSERT INTO livres (titre, auteur, disponible) VALUES
