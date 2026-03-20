@@ -351,26 +351,26 @@ Livrable technique : `docs/phase-4-refonte-logique-metier.md`
 
 ### Checklist
 
-- [ ] Refactoriser `LivreService`
-- [ ] Refactoriser `UtilisateurService`
-- [ ] Creer ou normaliser `EmpruntService`
-- [ ] Sortir la logique metier des controllers
-- [ ] Interdire le contournement direct de la couche service
-- [ ] Revoir les validations metier de creation
-- [ ] Revoir les validations metier de modification
-- [ ] Encadrer la disponibilite d'un livre
-- [ ] Encadrer l'unicite de l'email utilisateur
-- [ ] Encadrer la creation d'emprunt
-- [ ] Encadrer le retour d'emprunt
-- [ ] Gérer la mise a jour de disponibilite
-- [ ] Introduire des exceptions metier si necessaire
-- [ ] Standardiser les messages metier retournes aux controllers
+- [x] Refactoriser `LivreService`
+- [x] Refactoriser `UtilisateurService`
+- [x] Creer ou normaliser `EmpruntService`
+- [x] Sortir la logique metier des controllers
+- [x] Interdire le contournement direct de la couche service
+- [x] Revoir les validations metier de creation
+- [x] Revoir les validations metier de modification
+- [x] Encadrer la disponibilite d'un livre
+- [x] Encadrer l'unicite de l'email utilisateur
+- [x] Encadrer la creation d'emprunt
+- [x] Encadrer le retour d'emprunt
+- [x] Gérer la mise a jour de disponibilite
+- [x] Introduire des exceptions metier si necessaire
+- [x] Standardiser les messages metier retournes aux controllers
 
 ### Critere de sortie
 
-- [ ] Les services portent toutes les regles metier importantes
-- [ ] Les controllers ne contiennent plus de logique metier significative
-- [ ] Les traitements sont testables de facon unitaire
+- [x] Les services portent toutes les regles metier importantes
+- [x] Les controllers ne contiennent plus de logique metier significative
+- [x] Les traitements sont testables de facon unitaire
 
 ---
 
