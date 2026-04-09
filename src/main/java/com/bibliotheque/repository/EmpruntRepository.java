@@ -48,6 +48,9 @@ public interface EmpruntRepository extends JpaRepository<Emprunt, Long> {
     @Query("SELECT e FROM Emprunt e JOIN FETCH e.utilisateur JOIN FETCH e.livre WHERE e.dateRetour IS NOT NULL ORDER BY e.dateRetour DESC")
     List<Emprunt> findHistorique();
 
+    @Query("SELECT e FROM Emprunt e JOIN FETCH e.utilisateur JOIN FETCH e.livre WHERE e.id = :id")
+    java.util.Optional<Emprunt> findByIdWithDetails(@Param("id") Long id);
+
     long countByDateRetourIsNull();
 
     @Query("SELECT COUNT(e) FROM Emprunt e WHERE e.dateRetour IS NULL AND e.dateEmprunt < :date")

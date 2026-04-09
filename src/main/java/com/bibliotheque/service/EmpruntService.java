@@ -43,6 +43,11 @@ public class EmpruntService {
                 .orElseThrow(() -> new EmpruntNotFoundException(id));
     }
 
+    public Emprunt findDetailById(Long id) {
+        return empruntRepository.findByIdWithDetails(id)
+                .orElseThrow(() -> new EmpruntNotFoundException(id));
+    }
+
     public List<Emprunt> findActifs() {
         return empruntRepository.findEmpruntsActifs();
     }
