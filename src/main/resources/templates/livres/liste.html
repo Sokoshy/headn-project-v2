@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livres - Gestionnaire de Bibliothèque</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <a th:href="@{/}">Accueil</a>
+            <a th:href="@{/livres}">Livres</a>
+            <a th:href="@{/utilisateurs}">Utilisateurs</a>
+            <a th:href="@{/emprunts}">Emprunts</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Livres</h1>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <div class="actions">
+            <a th:href="@{/livres/nouveau}" class="btn btn-primary">Ajouter un livre</a>
+        </div>
+
+        <form method="get" th:action="@{/livres}" class="recherche">
+            <input type="text" name="recherche" th:value="${recherche}" placeholder="Rechercher par titre ou auteur...">
+            <button type="submit">Rechercher</button>
+            <a th:if="${recherche}" th:href="@{/livres}">Réinitialiser</a>
+        </form>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Titre</th>
+                    <th>Auteur</th>
+                    <th>Disponibilité</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="livre : ${livres}">
+                    <td th:text="${livre.titre}">Titre</td>
+                    <td th:text="${livre.auteur}">Auteur</td>
+                    <td>
+                        <span th:if="${livre.disponible}" class="badge badge-success">Disponible</span>
+                        <span th:unless="${livre.disponible}" class="badge badge-warning">Emprunté</span>
+                    </td>
+                    <td>
+                        <a th:href="@{/livres/{id}(id=${livre.id})}">Voir</a>
+                        <a th:href="@{/livres/{id}/edit(id=${livre.id})}">Modifier</a>
+                        <form th:action="@{/livres/{id}/delete(id=${livre.id})}" method="post" style="display:inline;">
+                            <button type="submit" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${livres.isEmpty()}">
+                    <td colspan="4">Aucun livre trouvé.</td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>

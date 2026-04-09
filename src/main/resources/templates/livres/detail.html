@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détail du livre - Gestionnaire de Bibliothèque</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <a th:href="@{/}">Accueil</a>
+            <a th:href="@{/livres}">Livres</a>
+            <a th:href="@{/utilisateurs}">Utilisateurs</a>
+            <a th:href="@{/emprunts}">Emprunts</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1 th:text="${livre.titre}">Titre du livre</h1>
+
+        <dl>
+            <dt>Auteur</dt>
+            <dd th:text="${livre.auteur}">Auteur</dd>
+
+            <dt>Disponibilité</dt>
+            <dd>
+                <span th:if="${livre.disponible}" class="badge badge-success">Disponible</span>
+                <span th:unless="${livre.disponible}" class="badge badge-warning">Emprunté</span>
+            </dd>
+
+            <dt>Date d'ajout</dt>
+            <dd th:text="${#temporals.format(livre.dateCreation, 'dd/MM/yyyy')}">01/01/2024</dd>
+        </dl>
+
+        <div class="actions">
+            <a th:href="@{/livres/{id}/edit(id=${livre.id})}" class="btn">Modifier</a>
+            <form th:action="@{/livres/{id}/delete(id=${livre.id})}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')">Supprimer</button>
+            </form>
+            <a th:href="@{/livres}" class="btn">Retour à la liste</a>
+        </div>
+    </main>
+</body>
+</html>

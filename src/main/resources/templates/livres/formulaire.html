@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${livre.id != null} ? 'Modifier un livre' : 'Ajouter un livre'">Formulaire livre</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <a th:href="@{/}">Accueil</a>
+            <a th:href="@{/livres}">Livres</a>
+            <a th:href="@{/utilisateurs}">Utilisateurs</a>
+            <a th:href="@{/emprunts}">Emprunts</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1 th:text="${livre.id != null} ? 'Modifier le livre' : 'Ajouter un livre'"></h1>
+
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <form th:action="${livre.id != null} ? @{/livres/{id}(id=${livre.id})} : @{/livres}"
+              th:object="${livre}"
+              method="post">
+            <input type="hidden" th:field="*{id}">
+            <div class="form-group">
+                <label for="titre">Titre *</label>
+                <input type="text" id="titre" th:field="*{titre}" required>
+                <span th:if="${#fields.hasErrors('titre')}" th:errors="*{titre}" class="error"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="auteur">Auteur *</label>
+                <input type="text" id="auteur" th:field="*{auteur}" required>
+                <span th:if="${#fields.hasErrors('auteur')}" th:errors="*{auteur}" class="error"></span>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-primary" th:text="${livre.id != null} ? 'Modifier' : 'Ajouter'">Enregistrer</button>
+                <a th:href="@{/livres}" class="btn">Annuler</a>
+            </div>
+        </form>
+    </main>
+</body>
+</html>
