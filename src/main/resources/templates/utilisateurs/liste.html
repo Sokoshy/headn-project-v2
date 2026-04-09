@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Utilisateurs - Gestionnaire de Bibliothèque</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <a th:href="@{/}">Accueil</a>
+            <a th:href="@{/livres}">Livres</a>
+            <a th:href="@{/utilisateurs}">Utilisateurs</a>
+            <a th:href="@{/emprunts}">Emprunts</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Utilisateurs</h1>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <div class="actions">
+            <a th:href="@{/utilisateurs/nouveau}" class="btn btn-primary">Ajouter un utilisateur</a>
+        </div>
+
+        <form method="get" th:action="@{/utilisateurs}" class="recherche">
+            <input type="text" name="recherche" th:value="${recherche}" placeholder="Rechercher par nom ou email...">
+            <button type="submit">Rechercher</button>
+            <a th:if="${recherche}" th:href="@{/utilisateurs}">Réinitialiser</a>
+        </form>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="utilisateur : ${utilisateurs}">
+                    <td th:text="${utilisateur.nom}">Nom</td>
+                    <td th:text="${utilisateur.email}">email@example.com</td>
+                    <td>
+                        <a th:href="@{/utilisateurs/{id}(id=${utilisateur.id})}">Voir</a>
+                        <a th:href="@{/utilisateurs/{id}/edit(id=${utilisateur.id})}">Modifier</a>
+                        <form th:action="@{/utilisateurs/{id}/delete(id=${utilisateur.id})}" method="post" style="display:inline;">
+                            <button type="submit" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${utilisateurs.isEmpty()}">
+                    <td colspan="3">Aucun utilisateur trouvé.</td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>

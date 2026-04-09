@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détail utilisateur - Gestionnaire de Bibliothèque</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <a th:href="@{/}">Accueil</a>
+            <a th:href="@{/livres}">Livres</a>
+            <a th:href="@{/utilisateurs}">Utilisateurs</a>
+            <a th:href="@{/emprunts}">Emprunts</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1 th:text="${utilisateur.nom}">Nom de l'utilisateur</h1>
+
+        <dl>
+            <dt>Email</dt>
+            <dd th:text="${utilisateur.email}">email@example.com</dd>
+        </dl>
+
+        <div class="actions">
+            <a th:href="@{/utilisateurs/{id}/edit(id=${utilisateur.id})}" class="btn">Modifier</a>
+            <form th:action="@{/utilisateurs/{id}/delete(id=${utilisateur.id})}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">Supprimer</button>
+            </form>
+            <a th:href="@{/utilisateurs}" class="btn">Retour à la liste</a>
+        </div>
+    </main>
+</body>
+</html>
