@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détail emprunt - Gestionnaire de Bibliothèque</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <a th:href="@{/}">Accueil</a>
+            <a th:href="@{/livres}">Livres</a>
+            <a th:href="@{/utilisateurs}">Utilisateurs</a>
+            <a th:href="@{/emprunts}">Emprunts</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Détail de l'emprunt</h1>
+
+        <dl>
+            <dt>Livre</dt>
+            <dd th:text="${emprunt.livre.titre + ' - ' + emprunt.livre.auteur}">Titre - Auteur</dd>
+
+            <dt>Utilisateur</dt>
+            <dd th:text="${emprunt.utilisateur.nom}">Nom</dd>
+
+            <dt>Date d'emprunt</dt>
+            <dd th:text="${#temporals.format(emprunt.dateEmprunt, 'dd/MM/yyyy')}">01/01/2024</dd>
+
+            <dt>Date de retour</dt>
+            <dd th:text="${emprunt.dateRetour != null ? #temporals.format(emprunt.dateRetour, 'dd/MM/yyyy') : 'En cours'}">En cours</dd>
+
+            <dt>Statut</dt>
+            <dd>
+                <span th:if="${emprunt.estEnCours()}" class="badge badge-success">En cours</span>
+                <span th:unless="${emprunt.estEnCours()}" class="badge badge-secondary">Terminé</span>
+                <span th:if="${emprunt.estEnRetard()}" class="badge badge-danger">En retard</span>
+            </dd>
+        </dl>
+
+        <div class="actions" th:if="${emprunt.estEnCours()}">
+            <form th:action="@{/emprunts/{id}/retour(id=${emprunt.id})}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-primary">Enregistrer le retour</button>
+            </form>
+        </div>
+
+        <div class="actions">
+            <a th:href="@{/emprunts}" class="btn">Retour à la liste</a>
+        </div>
+    </main>
+</body>
+</html>

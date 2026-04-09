@@ -3,10 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestionnaire de Bibliothèque</title>
+    <title>Accueil - Gestionnaire de Bibliothèque</title>
 </head>
 <body>
-    <h1>Bienvenue au Gestionnaire de Bibliothèque</h1>
-    <p>Application en cours de migration vers Spring Boot</p>
+    <header>
+        <nav>
+            <a th:href="@{/}">Accueil</a>
+            <a th:href="@{/livres}">Livres</a>
+            <a th:href="@{/utilisateurs}">Utilisateurs</a>
+            <a th:href="@{/emprunts}">Emprunts</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Bienvenue au Gestionnaire de Bibliothèque</h1>
+
+        <section class="statistiques">
+            <h2>Statistiques</h2>
+            <div class="cartes-stats">
+                <div class="carte">
+                    <h3>Livres</h3>
+                    <p><span th:text="${livresDisponibles}">0</span> / <span th:text="${totalLivres}">0</span> disponibles</p>
+                    <a th:href="@{/livres}">Voir les livres</a>
+                </div>
+                <div class="carte">
+                    <h3>Utilisateurs</h3>
+                    <p><span th:text="${totalUtilisateurs}">0</span> inscrits</p>
+                    <a th:href="@{/utilisateurs}">Voir les utilisateurs</a>
+                </div>
+                <div class="carte">
+                    <h3>Emprunts</h3>
+                    <p><span th:text="${empruntsActifs}">0</span> en cours</p>
+                    <a th:href="@{/emprunts}">Voir les emprunts</a>
+                </div>
+                <div class="carte" th:if="${empruntsEnRetard > 0}">
+                    <h3>Alertes</h3>
+                    <p><span th:text="${empruntsEnRetard}">0</span> emprunts en retard</p>
+                    <a th:href="@{/emprunts}">Voir</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="actions-rapides">
+            <h2>Actions rapides</h2>
+            <div class="boutons-actions">
+                <a th:href="@{/livres/nouveau}" class="btn">Ajouter un livre</a>
+                <a th:href="@{/utilisateurs/nouveau}" class="btn">Ajouter un utilisateur</a>
+                <a th:href="@{/emprunts}" class="btn">Nouvel emprunt</a>
+            </div>
+        </section>
+    </main>
 </body>
 </html>

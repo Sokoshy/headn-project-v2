@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emprunts - Gestionnaire de Bibliothèque</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <a th:href="@{/}">Accueil</a>
+            <a th:href="@{/livres}">Livres</a>
+            <a th:href="@{/utilisateurs}">Utilisateurs</a>
+            <a th:href="@{/emprunts}">Emprunts</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Emprunts</h1>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <section class="nouvel-emprunt">
+            <h2>Nouvel emprunt</h2>
+            <form th:action="@{/emprunts}" method="post">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="utilisateur">Utilisateur</label>
+                        <select id="utilisateur" name="utilisateurId" required>
+                            <option value="">Sélectionner un utilisateur</option>
+                            <option th:each="u : ${utilisateurs}" th:value="${u.id}" th:text="${u.nom}"></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="livre">Livre</label>
+                        <select id="livre" name="livreId" required>
+                            <option value="">Sélectionner un livre</option>
+                            <option th:each="l : ${livresDisponibles}" th:value="${l.id}" th:text="${l.titre + ' - ' + l.auteur}"></option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Enregistrer l'emprunt</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="emprunts-actifs">
+            <h2>Emprunts en cours (<span th:text="${empruntsActifs.size()}">0</span>)</h2>
+
+            <div th:if="${empruntsActifs.isEmpty()}" class="etat-vide">
+                Aucun emprunt en cours.
+            </div>
+
+            <table th:unless="${empruntsActifs.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th>Livre</th>
+                        <th>Utilisateur</th>
+                        <th>Date d'emprunt</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="emprunt : ${empruntsActifs}">
+                        <td th:text="${emprunt.livre.titre}">Titre</td>
+                        <td th:text="${emprunt.utilisateur.nom}">Utilisateur</td>
+                        <td th:text="${#temporals.format(emprunt.dateEmprunt, 'dd/MM/yyyy')}">01/01/2024</td>
+                        <td>
+                            <span th:if="${emprunt.estEnRetard()}" class="badge badge-danger">En retard</span>
+                            <span th:unless="${emprunt.estEnRetard()}" class="badge badge-success">En cours</span>
+                        </td>
+                        <td>
+                            <form th:action="@{/emprunts/{id}/retour(id=${emprunt.id})}" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm">Retour</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="historique">
+            <h2>Historique des emprunts</h2>
+
+            <div th:if="${historique.isEmpty()}" class="etat-vide">
+                Aucun historique d'emprunts.
+            </div>
+
+            <table th:unless="${historique.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th>Livre</th>
+                        <th>Utilisateur</th>
+                        <th>Date d'emprunt</th>
+                        <th>Date de retour</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="emprunt : ${historique}">
+                        <td th:text="${emprunt.livre.titre}">Titre</td>
+                        <td th:text="${emprunt.utilisateur.nom}">Utilisateur</td>
+                        <td th:text="${#temporals.format(emprunt.dateEmprunt, 'dd/MM/yyyy')}">01/01/2024</td>
+                        <td th:text="${#temporals.format(emprunt.dateRetour, 'dd/MM/yyyy')}">15/01/2024</td>
+                        <td>
+                            <a th:href="@{/emprunts/{id}(id=${emprunt.id})}">Voir</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</body>
+</html>
