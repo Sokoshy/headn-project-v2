@@ -384,28 +384,28 @@ Livrable technique : `docs/phase-5-controllers-routes.md`
 
 ### Checklist
 
-- [ ] Remplacer progressivement les Servlets par des controllers Spring MVC
-- [ ] Definir les routes principales de l'application
-- [ ] Implementer `GET /`
-- [ ] Implementer `GET /livres`
-- [ ] Implementer `GET /livres/nouveau` si retenu
-- [ ] Implementer `GET /livres/{id}/edit`
-- [ ] Implementer `POST /livres`
-- [ ] Implementer `POST /livres/{id}`
-- [ ] Implementer `POST /livres/{id}/delete`
-- [ ] Aligner les routes `utilisateurs` sur les memes conventions
-- [ ] Implementer `GET /emprunts`
-- [ ] Implementer `POST /emprunts`
-- [ ] Implementer `POST /emprunts/{id}/retour`
-- [ ] Utiliser proprement les redirections et flash attributes en remplacement du mecanisme actuel base sur `HttpSession` dans les Servlets
-- [ ] Normaliser les noms d'action et le vocabulaire expose
-- [ ] Uniformiser la gestion des erreurs de formulaire
+- [x] Remplacer progressivement les Servlets par des controllers Spring MVC
+- [x] Definir les routes principales de l'application
+- [x] Implementer `GET /`
+- [x] Implementer `GET /livres`
+- [x] Implementer `GET /livres/nouveau` si retenu
+- [x] Implementer `GET /livres/{id}/edit`
+- [x] Implementer `POST /livres`
+- [x] Implementer `POST /livres/{id}`
+- [x] Implementer `POST /livres/{id}/delete`
+- [x] Aligner les routes `utilisateurs` sur les memes conventions
+- [x] Implementer `GET /emprunts`
+- [x] Implementer `POST /emprunts`
+- [x] Implementer `POST /emprunts/{id}/retour`
+- [x] Utiliser proprement les redirections et flash attributes en remplacement du mecanisme actuel base sur `HttpSession` dans les Servlets
+- [x] Normaliser les noms d'action et le vocabulaire expose
+- [x] Uniformiser la gestion des erreurs de formulaire
 
 ### Critere de sortie
 
-- [ ] Les routes sont lisibles et coherentes
-- [ ] La couche web est modernisee
-- [ ] Les parcours sont mieux supportes par la structure HTTP
+- [x] Les routes sont lisibles et coherentes
+- [x] La couche web est modernisee
+- [x] Les parcours sont mieux supportes par la structure HTTP
 
 ---
 
@@ -419,64 +419,64 @@ Livrable technique : `docs/phase-6-refonte-ui-ux.md`
 
 ### Checklist layout global
 
-- [ ] Creer un layout global commun
-- [ ] Integrer une navigation principale persistante
-- [ ] Definir une structure de page commune
-- [ ] Standardiser les titres et sous-titres
-- [ ] Standardiser les zones d'actions
-- [ ] Standardiser les zones de messages flash
+- [x] Creer un layout global commun
+- [x] Integrer une navigation principale persistante
+- [x] Definir une structure de page commune
+- [x] Standardiser les titres et sous-titres
+- [x] Standardiser les zones d'actions
+- [x] Standardiser les zones de messages flash
 
 ### Checklist composants
 
-- [ ] Standardiser les boutons
-- [ ] Standardiser les formulaires
-- [ ] Standardiser les champs d'erreur
-- [ ] Standardiser les tableaux
-- [ ] Standardiser les badges de statut
-- [ ] Standardiser les cartes
-- [ ] Standardiser les confirmations d'action
-- [ ] Introduire des etats vides
-- [ ] Introduire des composants de filtre et recherche
+- [x] Standardiser les boutons
+- [x] Standardiser les formulaires
+- [x] Standardiser les champs d'erreur
+- [x] Standardiser les tableaux
+- [x] Standardiser les badges de statut
+- [x] Standardiser les cartes
+- [x] Standardiser les confirmations d'action
+- [x] Introduire des etats vides
+- [x] Introduire des composants de filtre et recherche
 
 ### Checklist page Accueil
 
-- [ ] Ajouter une vue d'ensemble utile
-- [ ] Ajouter des cartes d'acces rapide
-- [ ] Ajouter des statistiques pertinentes
-- [ ] Ajouter des raccourcis vers les actions frequentes
-- [ ] Mettre en avant les modules principaux
+- [x] Ajouter une vue d'ensemble utile
+- [x] Ajouter des cartes d'acces rapide
+- [x] Ajouter des statistiques pertinentes
+- [x] Ajouter des raccourcis vers les actions frequentes
+- [x] Mettre en avant les modules principaux
 
 ### Checklist page Livres
 
-- [ ] Afficher une recherche visible
-- [ ] Ajouter des filtres simples
-- [ ] Rendre la disponibilite immediatement lisible
-- [ ] Clarifier les actions de creation et edition
-- [ ] Clarifier la suppression
-- [ ] Rendre le tableau facile a parcourir
+- [x] Afficher une recherche visible
+- [x] Ajouter des filtres simples
+- [x] Rendre la disponibilite immediatement lisible
+- [x] Clarifier les actions de creation et edition
+- [x] Clarifier la suppression
+- [x] Rendre le tableau facile a parcourir
 
 ### Checklist page Utilisateurs
 
-- [ ] Rendre la liste plus lisible
-- [ ] Ajouter une recherche simple
-- [ ] Clarifier l'ajout
-- [ ] Clarifier la modification
-- [ ] Mettre en avant les informations utiles sans surcharge
+- [x] Rendre la liste plus lisible
+- [x] Ajouter une recherche simple
+- [x] Clarifier l'ajout
+- [x] Clarifier la modification
+- [x] Mettre en avant les informations utiles sans surcharge
 
 ### Checklist page Emprunts
 
-- [ ] Donner la priorite aux emprunts actifs
-- [ ] Clarifier le bloc de nouvel emprunt
-- [ ] Rendre l'action de retour evidente
-- [ ] Organiser clairement l'historique
-- [ ] Afficher des statuts lisibles
+- [x] Donner la priorite aux emprunts actifs
+- [x] Clarifier le bloc de nouvel emprunt
+- [x] Rendre l'action de retour evidente
+- [x] Organiser clairement l'historique
+- [x] Afficher des statuts lisibles
 
 ### Critere de sortie
 
-- [ ] L'application est visuellement coherente
-- [ ] La navigation est plus simple
-- [ ] Les actions principales sont visibles rapidement
-- [ ] Les ecrans sont plus ordonnes
+- [x] L'application est visuellement coherente
+- [x] La navigation est plus simple
+- [x] Les actions principales sont visibles rapidement
+- [x] Les ecrans sont plus ordonnes
 
 ---
 
