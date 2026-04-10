@@ -1,66 +1,109 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout (~{::title}, ~{::main})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Livres - Gestionnaire de Bibliothèque</title>
+    <title>Livres</title>
 </head>
 <body>
-    <header>
-        <nav>
-            <a th:href="@{/}">Accueil</a>
-            <a th:href="@{/livres}">Livres</a>
-            <a th:href="@{/utilisateurs}">Utilisateurs</a>
-            <a th:href="@{/emprunts}">Emprunts</a>
-        </nav>
-    </header>
-
-    <main>
-        <h1>Livres</h1>
-
-        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
-
-        <div class="actions">
-            <a th:href="@{/livres/nouveau}" class="btn btn-primary">Ajouter un livre</a>
+    <main th:fragment="content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Livres</h1>
+                <p class="page-subtitle">Gérez le catalogue de la bibliothèque</p>
+            </div>
         </div>
 
-        <form method="get" th:action="@{/livres}" class="recherche">
-            <input type="text" name="recherche" th:value="${recherche}" placeholder="Rechercher par titre ou auteur...">
-            <button type="submit">Rechercher</button>
-            <a th:if="${recherche}" th:href="@{/livres}">Réinitialiser</a>
-        </form>
+        <!-- Barre d'actions et recherche -->
+        <div class="actions-bar">
+            <div class="search-box">
+                <div class="search-input-wrapper">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text"
+                           class="search-input"
+                           name="recherche"
+                           th:value="${recherche}"
+                           placeholder="Rechercher par titre ou auteur..."
+                           form="search-form">
+                </div>
+                <button type="submit" form="search-form" class="btn btn-primary">Rechercher</button>
+                <a th:if="${recherche}" th:href="@{/livres}" class="btn btn-secondary">Réinitialiser</a>
+            </div>
+            <a th:href="@{/livres/nouveau}" class="btn btn-primary">
+                <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Nouveau livre
+            </a>
+        </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Titre</th>
-                    <th>Auteur</th>
-                    <th>Disponibilité</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="livre : ${livres}">
-                    <td th:text="${livre.titre}">Titre</td>
-                    <td th:text="${livre.auteur}">Auteur</td>
-                    <td>
-                        <span th:if="${livre.disponible}" class="badge badge-success">Disponible</span>
-                        <span th:unless="${livre.disponible}" class="badge badge-warning">Emprunté</span>
-                    </td>
-                    <td>
-                        <a th:href="@{/livres/{id}(id=${livre.id})}">Voir</a>
-                        <a th:href="@{/livres/{id}/edit(id=${livre.id})}">Modifier</a>
-                        <form th:action="@{/livres/{id}/delete(id=${livre.id})}" method="post" style="display:inline;">
-                            <button type="submit" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')">Supprimer</button>
-                        </form>
-                    </td>
-                </tr>
-                <tr th:if="${livres.isEmpty()}">
-                    <td colspan="4">Aucun livre trouvé.</td>
-                </tr>
-            </tbody>
-        </table>
+        <form id="search-form" method="get" th:action="@{/livres}" class="hidden-form"></form>
+
+        <!-- Liste des livres -->
+        <div th:if="${livres.isEmpty()}" class="empty-state">
+            <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <h3 class="empty-state-title">Aucun livre trouvé</h3>
+            <p class="empty-state-text" th:text="${recherche != null and !recherche.isEmpty()} ? |Aucun résultat pour &quot;${recherche}&quot;| : 'Commencez par ajouter un livre au catalogue'"></p>
+            <a th:if="${!recherche}" th:href="@{/livres/nouveau}" class="btn btn-primary">Ajouter un livre</a>
+        </div>
+
+        <div th:unless="${livres.isEmpty()}" class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Titre</th>
+                        <th>Auteur</th>
+                        <th>Disponibilité</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="livre : ${livres}">
+                        <td>
+                            <a th:href="@{/livres/{id}(id=${livre.id})}"
+                               th:text="${livre.titre}"
+                               class="table-link-strong">
+                                Titre
+                            </a>
+                        </td>
+                        <td th:text="${livre.auteur}">Auteur</td>
+                        <td>
+                            <span th:if="${livre.disponible}" class="badge badge-success">
+                                <svg class="icon-2xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20,6 9,17 4,12"/>
+                                </svg>
+                                Disponible
+                            </span>
+                            <span th:unless="${livre.disponible}" class="badge badge-warning">
+                                <svg class="icon-2xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                </svg>
+                                Emprunté
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <a th:href="@{/livres/{id}(id=${livre.id})}" class="btn btn-ghost btn-sm">Voir</a>
+                                <a th:href="@{/livres/{id}/edit(id=${livre.id})}" class="btn btn-ghost btn-sm">Modifier</a>
+                                <form th:action="@{/livres/{id}/delete(id=${livre.id})}" method="post" class="inline-form">
+                                    <button type="submit"
+                                            class="btn btn-ghost btn-sm btn-text-danger"
+                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')">
+                                        Supprimer
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </main>
 </body>
 </html>
