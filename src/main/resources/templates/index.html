@@ -1,55 +1,150 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout (~{::title}, ~{::main})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accueil - Gestionnaire de Bibliothèque</title>
+    <title>Accueil</title>
 </head>
 <body>
-    <header>
-        <nav>
-            <a th:href="@{/}">Accueil</a>
-            <a th:href="@{/livres}">Livres</a>
-            <a th:href="@{/utilisateurs}">Utilisateurs</a>
-            <a th:href="@{/emprunts}">Emprunts</a>
-        </nav>
-    </header>
+    <main th:fragment="content">
+        <div class="page-header">
+            <h1 class="page-title">Bienvenue</h1>
+            <p class="page-subtitle">Gestionnaire de Bibliothèque - Vue d'ensemble</p>
+        </div>
 
-    <main>
-        <h1>Bienvenue au Gestionnaire de Bibliothèque</h1>
+        <!-- Statistiques -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">
+                        <span th:text="${livresDisponibles}">0</span>
+                        <span class="stat-divider">/</span>
+                        <span th:text="${totalLivres}">0</span>
+                    </div>
+                    <div class="stat-label">Livres disponibles</div>
+                    <div class="stat-action">
+                        <a th:href="@{/livres}">Voir tous les livres</a>
+                    </div>
+                </div>
+            </div>
 
-        <section class="statistiques">
-            <h2>Statistiques</h2>
-            <div class="cartes-stats">
-                <div class="carte">
-                    <h3>Livres</h3>
-                    <p><span th:text="${livresDisponibles}">0</span> / <span th:text="${totalLivres}">0</span> disponibles</p>
-                    <a th:href="@{/livres}">Voir les livres</a>
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-success">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
                 </div>
-                <div class="carte">
-                    <h3>Utilisateurs</h3>
-                    <p><span th:text="${totalUtilisateurs}">0</span> inscrits</p>
-                    <a th:href="@{/utilisateurs}">Voir les utilisateurs</a>
+                <div class="stat-content">
+                    <div class="stat-value" th:text="${totalUtilisateurs}">0</div>
+                    <div class="stat-label">Utilisateurs inscrits</div>
+                    <div class="stat-action">
+                        <a th:href="@{/utilisateurs}">Voir les utilisateurs</a>
+                    </div>
                 </div>
-                <div class="carte">
-                    <h3>Emprunts</h3>
-                    <p><span th:text="${empruntsActifs}">0</span> en cours</p>
-                    <a th:href="@{/emprunts}">Voir les emprunts</a>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14,2 14,8 20,8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
                 </div>
-                <div class="carte" th:if="${empruntsEnRetard > 0}">
-                    <h3>Alertes</h3>
-                    <p><span th:text="${empruntsEnRetard}">0</span> emprunts en retard</p>
-                    <a th:href="@{/emprunts}">Voir</a>
+                <div class="stat-content">
+                    <div class="stat-value" th:text="${empruntsActifs}">0</div>
+                    <div class="stat-label">Emprunts en cours</div>
+                    <div class="stat-action">
+                        <a th:href="@{/emprunts}">Voir les emprunts</a>
+                    </div>
                 </div>
+            </div>
+
+            <div class="stat-card" th:if="${empruntsEnRetard > 0}">
+                <div class="stat-icon stat-icon-danger">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12,6 12,12 16,14"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" th:text="${empruntsEnRetard}">0</div>
+                    <div class="stat-label">Emprunts en retard</div>
+                    <div class="stat-action">
+                        <a th:href="@{/emprunts}">Gérer les retards</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Actions rapides</h2>
+            </div>
+            <div class="quick-actions">
+                <a th:href="@{/livres/nouveau}" class="quick-action">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Ajouter un livre
+                </a>
+                <a th:href="@{/utilisateurs/nouveau}" class="quick-action">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Ajouter un utilisateur
+                </a>
+                <a th:href="@{/emprunts}" class="quick-action">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14,2 14,8 20,8"/>
+                        <line x1="12" y1="11" x2="12" y2="17"/>
+                        <line x1="9" y1="14" x2="15" y2="14"/>
+                    </svg>
+                    Nouvel emprunt
+                </a>
             </div>
         </section>
 
-        <section class="actions-rapides">
-            <h2>Actions rapides</h2>
-            <div class="boutons-actions">
-                <a th:href="@{/livres/nouveau}" class="btn">Ajouter un livre</a>
-                <a th:href="@{/utilisateurs/nouveau}" class="btn">Ajouter un utilisateur</a>
-                <a th:href="@{/emprunts}" class="btn">Nouvel emprunt</a>
+        <!-- Navigation par module -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Modules</h2>
+            </div>
+            <div class="stats-grid">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title mb-4">Livres</h3>
+                        <p class="page-subtitle mb-4">Gérez le catalogue de la bibliothèque</p>
+                        <a th:href="@{/livres}" class="btn btn-primary">Accéder</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title mb-4">Utilisateurs</h3>
+                        <p class="page-subtitle mb-4">Gérez les membres de la bibliothèque</p>
+                        <a th:href="@{/utilisateurs}" class="btn btn-primary">Accéder</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title mb-4">Emprunts</h3>
+                        <p class="page-subtitle mb-4">Suivez les emprunts et les retours</p>
+                        <a th:href="@{/emprunts}" class="btn btn-primary">Accéder</a>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
