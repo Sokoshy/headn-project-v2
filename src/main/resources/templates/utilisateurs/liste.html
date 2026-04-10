@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/main :: layout (~{::title}, ~{::main})}">
+      th:replace="~{layout/main :: layout (~{::title}, ~{::content})}">
 <head>
     <title>Utilisateurs</title>
 </head>
 <body>
-    <main th:fragment="content">
+    <div th:fragment="content">
         <div class="page-header">
             <div>
                 <h1 class="page-title">Utilisateurs</h1>
@@ -13,15 +13,16 @@
             </div>
         </div>
 
-        <!-- Barre d'actions et recherche -->
         <div class="actions-bar">
             <div class="search-box">
+                <label for="recherche-utilisateurs" class="sr-only">Rechercher un utilisateur par nom ou email</label>
                 <div class="search-input-wrapper">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <circle cx="11" cy="11" r="8"/>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                     </svg>
                     <input type="text"
+                           id="recherche-utilisateurs"
                            class="search-input"
                            name="recherche"
                            th:value="${recherche}"
@@ -32,7 +33,7 @@
                 <a th:if="${recherche}" th:href="@{/utilisateurs}" class="btn btn-secondary">Réinitialiser</a>
             </div>
             <a th:href="@{/utilisateurs/nouveau}" class="btn btn-primary">
-                <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <line x1="12" y1="5" x2="12" y2="19"/>
                     <line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
@@ -42,9 +43,8 @@
 
         <form id="search-form" method="get" th:action="@{/utilisateurs}" class="hidden-form"></form>
 
-        <!-- Liste des utilisateurs -->
         <div th:if="${utilisateurs.isEmpty()}" class="empty-state">
-            <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
             </svg>
@@ -55,11 +55,12 @@
 
         <div th:unless="${utilisateurs.isEmpty()}" class="table-container">
             <table class="table">
+                <caption class="sr-only">Liste des utilisateurs avec le nom, l'email et les actions disponibles</caption>
                 <thead>
                     <tr>
-                        <th>Nom</th>
-                        <th>Email</th>
-                        <th>Actions</th>
+                        <th scope="col">Nom</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -89,6 +90,6 @@
                 </tbody>
             </table>
         </div>
-    </main>
+    </div>
 </body>
 </html>
