@@ -1,52 +1,103 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout (~{::title}, ~{::main})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Détail emprunt - Gestionnaire de Bibliothèque</title>
+    <title>Détail emprunt</title>
 </head>
 <body>
-    <header>
-        <nav>
-            <a th:href="@{/}">Accueil</a>
-            <a th:href="@{/livres}">Livres</a>
-            <a th:href="@{/utilisateurs}">Utilisateurs</a>
-            <a th:href="@{/emprunts}">Emprunts</a>
-        </nav>
-    </header>
-
-    <main>
-        <h1>Détail de l'emprunt</h1>
-
-        <dl>
-            <dt>Livre</dt>
-            <dd th:text="${emprunt.livre.titre + ' - ' + emprunt.livre.auteur}">Titre - Auteur</dd>
-
-            <dt>Utilisateur</dt>
-            <dd th:text="${emprunt.utilisateur.nom}">Nom</dd>
-
-            <dt>Date d'emprunt</dt>
-            <dd th:text="${#temporals.format(emprunt.dateEmprunt, 'dd/MM/yyyy')}">01/01/2024</dd>
-
-            <dt>Date de retour</dt>
-            <dd th:text="${emprunt.dateRetour != null ? #temporals.format(emprunt.dateRetour, 'dd/MM/yyyy') : 'En cours'}">En cours</dd>
-
-            <dt>Statut</dt>
-            <dd>
-                <span th:if="${emprunt.estEnCours()}" class="badge badge-success">En cours</span>
-                <span th:unless="${emprunt.estEnCours()}" class="badge badge-secondary">Terminé</span>
-                <span th:if="${emprunt.estEnRetard()}" class="badge badge-danger">En retard</span>
-            </dd>
-        </dl>
-
-        <div class="actions" th:if="${emprunt.estEnCours()}">
-            <form th:action="@{/emprunts/{id}/retour(id=${emprunt.id})}" method="post" style="display:inline;">
-                <button type="submit" class="btn btn-primary">Enregistrer le retour</button>
-            </form>
+    <main th:fragment="content">
+        <div class="detail-header">
+            <div>
+                <h1 class="detail-title">Détail de l'emprunt</h1>
+            </div>
+            <div class="detail-actions" th:if="${emprunt.estEnCours()}">
+                <form th:action="@{/emprunts/{id}/retour(id=${emprunt.id})}" method="post" class="inline-form">
+                    <button type="submit" class="btn btn-primary">
+                        <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9,14 4,9 9,4"/>
+                            <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+                        </svg>
+                        Enregistrer le retour
+                    </button>
+                </form>
+            </div>
         </div>
 
-        <div class="actions">
-            <a th:href="@{/emprunts}" class="btn">Retour à la liste</a>
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Informations</h2>
+            </div>
+            <div class="card-body">
+                <dl class="detail-list">
+                    <div class="detail-item">
+                        <dt>Livre</dt>
+                        <dd>
+                            <a th:href="@{/livres/{id}(id=${emprunt.livre.id})}"
+                               th:text="${emprunt.livre.titre}"
+                               class="link-primary-strong">
+                                Titre
+                            </a>
+                            <span th:text="' - ' + ${emprunt.livre.auteur}" class="link-muted"> - Auteur</span>
+                        </dd>
+                    </div>
+                    <div class="detail-item">
+                        <dt>Utilisateur</dt>
+                        <dd>
+                            <a th:href="@{/utilisateurs/{id}(id=${emprunt.utilisateur.id})}"
+                               th:text="${emprunt.utilisateur.nom}"
+                               class="link-primary-strong">
+                                Nom
+                            </a>
+                        </dd>
+                    </div>
+                    <div class="detail-item">
+                        <dt>Date d'emprunt</dt>
+                        <dd th:text="${#temporals.format(emprunt.dateEmprunt, 'dd MMMM yyyy')}">01 janvier 2024</dd>
+                    </div>
+                    <div class="detail-item">
+                        <dt>Date de retour</dt>
+                        <dd th:text="${emprunt.dateRetour != null ? #temporals.format(emprunt.dateRetour, 'dd MMMM yyyy') : 'En cours'}" class="return-date-value">
+                            En cours
+                        </dd>
+                    </div>
+                    <div class="detail-item">
+                        <dt>Statut</dt>
+                        <dd>
+                            <span th:if="${emprunt.estEnCours() and !emprunt.estEnRetard()}" class="badge badge-success">
+                                <svg class="icon-xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12,6 12,12 16,14"/>
+                                </svg>
+                                En cours
+                            </span>
+                            <span th:if="${emprunt.estEnRetard()}" class="badge badge-danger">
+                                <svg class="icon-xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                                En retard
+                            </span>
+                            <span th:if="${!emprunt.estEnCours()}" class="badge badge-neutral">
+                                <svg class="icon-xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20,6 9,17 4,12"/>
+                                </svg>
+                                Terminé
+                            </span>
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <div class="mt-6">
+            <a th:href="@{/emprunts}" class="btn btn-ghost">
+                <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"/>
+                    <polyline points="12,19 5,12 12,5"/>
+                </svg>
+                Retour à la liste
+            </a>
         </div>
     </main>
 </body>
