@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/main :: layout (~{::title}, ~{::main})}">
+      th:replace="~{layout/main :: layout (~{::title}, ~{::content})}">
 <head>
     <title>Emprunts</title>
 </head>
 <body>
-    <main th:fragment="content">
+    <div th:fragment="content">
         <div class="page-header">
             <div>
                 <h1 class="page-title">Emprunts</h1>
@@ -13,7 +13,6 @@
             </div>
         </div>
 
-        <!-- Nouvel emprunt -->
         <section class="section">
             <div class="card">
                 <div class="card-header">
@@ -41,7 +40,7 @@
                         </div>
                         <div class="form-group form-group-compact form-group-submit">
                             <button type="submit" class="btn btn-primary w-full">
-                                <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <line x1="12" y1="5" x2="12" y2="19"/>
                                     <line x1="5" y1="12" x2="19" y2="12"/>
                                 </svg>
@@ -53,7 +52,6 @@
             </div>
         </section>
 
-        <!-- Emprunts actifs -->
         <section class="section">
             <div class="section-header">
                 <h2 class="section-title">Emprunts en cours</h2>
@@ -61,7 +59,7 @@
             </div>
 
             <div th:if="${empruntsActifs.isEmpty()}" class="empty-state">
-                <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                     <polyline points="14,2 14,8 20,8"/>
                 </svg>
@@ -71,13 +69,14 @@
 
             <div th:unless="${empruntsActifs.isEmpty()}" class="table-container">
                 <table class="table">
+                    <caption class="sr-only">Liste des emprunts en cours avec le livre, l'utilisateur, la date d'emprunt, le statut et les actions</caption>
                     <thead>
                         <tr>
-                            <th>Livre</th>
-                            <th>Utilisateur</th>
-                            <th>Date d'emprunt</th>
-                            <th>Statut</th>
-                            <th>Actions</th>
+                            <th scope="col">Livre</th>
+                            <th scope="col">Utilisateur</th>
+                            <th scope="col">Date d'emprunt</th>
+                            <th scope="col">Statut</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -99,7 +98,7 @@
                             <td th:text="${#temporals.format(emprunt.dateEmprunt, 'dd MMM yyyy')}">01 jan. 2024</td>
                             <td>
                                 <span th:if="${emprunt.estEnRetard()}" class="badge badge-danger">
-                                    <svg class="icon-2xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <svg class="icon-2xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                         <circle cx="12" cy="12" r="10"/>
                                         <line x1="12" y1="8" x2="12" y2="12"/>
                                         <line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -107,7 +106,7 @@
                                     En retard
                                 </span>
                                 <span th:unless="${emprunt.estEnRetard()}" class="badge badge-success">
-                                    <svg class="icon-2xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <svg class="icon-2xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                         <circle cx="12" cy="12" r="10"/>
                                         <polyline points="12,6 12,12 16,14"/>
                                     </svg>
@@ -115,16 +114,18 @@
                                 </span>
                             </td>
                             <td>
-                                <form th:action="@{/emprunts/{id}/retour(id=${emprunt.id})}" method="post" class="inline-form">
-                                    <button type="submit" class="btn btn-primary btn-sm">
-                                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <polyline points="9,14 4,9 9,4"/>
-                                            <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
-                                        </svg>
-                                        Retour
-                                    </button>
-                                </form>
-                                <a th:href="@{/emprunts/{id}(id=${emprunt.id})}" class="btn btn-ghost btn-sm">Détail</a>
+                                <div class="actions">
+                                    <form th:action="@{/emprunts/{id}/retour(id=${emprunt.id})}" method="post" class="inline-form">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                <polyline points="9,14 4,9 9,4"/>
+                                                <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+                                            </svg>
+                                            Retour
+                                        </button>
+                                    </form>
+                                    <a th:href="@{/emprunts/{id}(id=${emprunt.id})}" class="btn btn-ghost btn-sm">Détail</a>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -132,7 +133,6 @@
             </div>
         </section>
 
-        <!-- Historique -->
         <section class="section">
             <div class="section-header">
                 <h2 class="section-title">Historique</h2>
@@ -140,7 +140,7 @@
             </div>
 
             <div th:if="${historique.isEmpty()}" class="empty-state">
-                <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                     <circle cx="12" cy="12" r="10"/>
                     <polyline points="12,6 12,12 16,14"/>
                 </svg>
@@ -150,13 +150,14 @@
 
             <div th:unless="${historique.isEmpty()}" class="table-container">
                 <table class="table">
+                    <caption class="sr-only">Historique des emprunts avec le livre, l'utilisateur, les dates d'emprunt et de retour, ainsi que l'accès au détail</caption>
                     <thead>
                         <tr>
-                            <th>Livre</th>
-                            <th>Utilisateur</th>
-                            <th>Date d'emprunt</th>
-                            <th>Date de retour</th>
-                            <th>Actions</th>
+                            <th scope="col">Livre</th>
+                            <th scope="col">Utilisateur</th>
+                            <th scope="col">Date d'emprunt</th>
+                            <th scope="col">Date de retour</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -185,6 +186,6 @@
                 </table>
             </div>
         </section>
-    </main>
+    </div>
 </body>
 </html>

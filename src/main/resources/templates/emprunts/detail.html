@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/main :: layout (~{::title}, ~{::main})}">
+      th:replace="~{layout/main :: layout (~{::title}, ~{::content})}">
 <head>
     <title>Détail emprunt</title>
 </head>
 <body>
-    <main th:fragment="content">
+    <div th:fragment="content">
         <div class="detail-header">
             <div>
                 <h1 class="detail-title">Détail de l'emprunt</h1>
@@ -13,7 +13,7 @@
             <div class="detail-actions" th:if="${emprunt.estEnCours()}">
                 <form th:action="@{/emprunts/{id}/retour(id=${emprunt.id})}" method="post" class="inline-form">
                     <button type="submit" class="btn btn-primary">
-                        <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <polyline points="9,14 4,9 9,4"/>
                             <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
                         </svg>
@@ -64,14 +64,14 @@
                         <dt>Statut</dt>
                         <dd>
                             <span th:if="${emprunt.estEnCours() and !emprunt.estEnRetard()}" class="badge badge-success">
-                                <svg class="icon-xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg class="icon-xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <circle cx="12" cy="12" r="10"/>
                                     <polyline points="12,6 12,12 16,14"/>
                                 </svg>
                                 En cours
                             </span>
                             <span th:if="${emprunt.estEnRetard()}" class="badge badge-danger">
-                                <svg class="icon-xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg class="icon-xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <circle cx="12" cy="12" r="10"/>
                                     <line x1="12" y1="8" x2="12" y2="12"/>
                                     <line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -79,7 +79,7 @@
                                 En retard
                             </span>
                             <span th:if="${!emprunt.estEnCours()}" class="badge badge-neutral">
-                                <svg class="icon-xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg class="icon-xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <polyline points="20,6 9,17 4,12"/>
                                 </svg>
                                 Terminé
@@ -92,13 +92,13 @@
 
         <div class="mt-6">
             <a th:href="@{/emprunts}" class="btn btn-ghost">
-                <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <line x1="19" y1="12" x2="5" y2="12"/>
                     <polyline points="12,19 5,12 12,5"/>
                 </svg>
                 Retour à la liste
             </a>
         </div>
-    </main>
+    </div>
 </body>
 </html>
