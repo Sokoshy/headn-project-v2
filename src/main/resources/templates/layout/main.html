@@ -3,36 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" th:content="${title} + ' - Gestionnaire de Bibliothèque'">
     <title th:text="${title} + ' - Bibliothèque'">Bibliothèque</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
+    <!-- Skip Link pour l'accessibilité -->
+    <a href="#main-content" class="skip-link">Aller au contenu principal</a>
+
     <header class="header">
         <div class="header-container">
-            <a th:href="@{/}" class="logo">
-                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <a th:href="@{/}" class="logo" aria-label="Accueil de la bibliothèque">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
                     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
                 </svg>
                 <span class="logo-text">Bibliothèque</span>
             </a>
-            <nav class="nav">
-                <a th:href="@{/}" class="nav-link" th:classappend="${currentPath == '/'} ? 'active'">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <nav class="nav" role="navigation" aria-label="Navigation principale">
+                <a th:href="@{/}" class="nav-link" th:classappend="${currentPath == '/'} ? 'active'" th:attr="aria-current=${currentPath == '/'} ? 'page' : null">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                         <polyline points="9,22 9,12 15,12 15,22"/>
                     </svg>
                     <span class="nav-label">Accueil</span>
                 </a>
-                <a th:href="@{/livres}" class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/livres')} ? 'active'">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <a th:href="@{/livres}" class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/livres')} ? 'active'" th:attr="aria-current=${#strings.startsWith(currentPath, '/livres')} ? 'page' : null">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
                         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
                     </svg>
                     <span class="nav-label">Livres</span>
                 </a>
-                <a th:href="@{/utilisateurs}" class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/utilisateurs')} ? 'active'">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <a th:href="@{/utilisateurs}" class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/utilisateurs')} ? 'active'" th:attr="aria-current=${#strings.startsWith(currentPath, '/utilisateurs')} ? 'page' : null">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
                         <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -40,8 +44,8 @@
                     </svg>
                     <span class="nav-label">Utilisateurs</span>
                 </a>
-                <a th:href="@{/emprunts}" class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/emprunts')} ? 'active'">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <a th:href="@{/emprunts}" class="nav-link" th:classappend="${#strings.startsWith(currentPath, '/emprunts')} ? 'active'" th:attr="aria-current=${#strings.startsWith(currentPath, '/emprunts')} ? 'page' : null">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                         <polyline points="14,2 14,8 20,8"/>
                         <line x1="16" y1="13" x2="8" y2="13"/>
@@ -54,18 +58,18 @@
         </div>
     </header>
 
-    <main class="main">
+    <main id="main-content" class="main" tabindex="-1">
         <div class="container">
             <!-- Messages Flash -->
-            <div th:if="${success}" class="alert alert-success" role="alert">
-                <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div th:if="${success}" class="alert alert-success" role="alert" aria-live="polite">
+                <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                     <polyline points="22,4 12,14.01 9,11.01"/>
                 </svg>
                 <span th:text="${success}">Succès</span>
             </div>
-            <div th:if="${error}" class="alert alert-error" role="alert">
-                <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div th:if="${error}" class="alert alert-error" role="alert" aria-live="assertive">
+                <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <circle cx="12" cy="12" r="10"/>
                     <line x1="12" y1="8" x2="12" y2="12"/>
                     <line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -77,7 +81,7 @@
         </div>
     </main>
 
-    <footer class="footer">
+    <footer class="footer" role="contentinfo">
         <div class="footer-container">
             <p class="footer-text">Gestionnaire de Bibliothèque</p>
         </div>
