@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/main :: layout (~{::title}, ~{::main})}">
+      th:replace="~{layout/main :: layout (~{::title}, ~{::content})}">
 <head>
     <title th:text="${livre.id != null} ? 'Modifier un livre' : 'Ajouter un livre'">Formulaire</title>
 </head>
 <body>
-    <main th:fragment="content">
+    <div th:fragment="content">
         <div class="page-header">
             <div>
                 <h1 class="page-title" th:text="${livre.id != null} ? 'Modifier le livre' : 'Ajouter un livre'"></h1>
@@ -53,6 +53,6 @@
                 </form>
             </div>
         </div>
-    </main>
+    </div>
 </body>
 </html>
