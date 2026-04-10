@@ -490,22 +490,22 @@ Livrable technique : `docs/phase-7-responsive-accessibilite.md`
 
 ### Checklist
 
-- [ ] Adopter une approche mobile first
-- [ ] Definir des breakpoints clairs
-- [ ] Adapter les tableaux au mobile
-- [ ] Adapter les formulaires au mobile
-- [ ] Garantir un focus visible
-- [ ] Verifier les contrastes
-- [ ] Verifier la navigation clavier
-- [ ] Associer correctement labels et champs
-- [ ] Assurer une structure semantique correcte
-- [ ] Rendre les messages d'erreur comprehensibles
+- [x] Adopter une approche mobile first
+- [x] Definir des breakpoints clairs
+- [x] Adapter les tableaux au mobile
+- [x] Adapter les formulaires au mobile
+- [x] Garantir un focus visible
+- [x] Verifier les contrastes
+- [x] Verifier la navigation clavier
+- [x] Associer correctement labels et champs
+- [x] Assurer une structure semantique correcte
+- [x] Rendre les messages d'erreur comprehensibles
 
 ### Critere de sortie
 
-- [ ] L'interface reste lisible sur mobile
-- [ ] L'application est utilisable au clavier
-- [ ] Le niveau d'accessibilite est nettement ameliore
+- [x] L'interface reste lisible sur mobile
+- [x] L'application est utilisable au clavier
+- [x] Le niveau d'accessibilite est nettement ameliore
 
 ---
 
