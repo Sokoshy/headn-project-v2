@@ -1,61 +1,94 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout (~{::title}, ~{::main})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Utilisateurs - Gestionnaire de Bibliothèque</title>
+    <title>Utilisateurs</title>
 </head>
 <body>
-    <header>
-        <nav>
-            <a th:href="@{/}">Accueil</a>
-            <a th:href="@{/livres}">Livres</a>
-            <a th:href="@{/utilisateurs}">Utilisateurs</a>
-            <a th:href="@{/emprunts}">Emprunts</a>
-        </nav>
-    </header>
-
-    <main>
-        <h1>Utilisateurs</h1>
-
-        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
-
-        <div class="actions">
-            <a th:href="@{/utilisateurs/nouveau}" class="btn btn-primary">Ajouter un utilisateur</a>
+    <main th:fragment="content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Utilisateurs</h1>
+                <p class="page-subtitle">Gérez les membres de la bibliothèque</p>
+            </div>
         </div>
 
-        <form method="get" th:action="@{/utilisateurs}" class="recherche">
-            <input type="text" name="recherche" th:value="${recherche}" placeholder="Rechercher par nom ou email...">
-            <button type="submit">Rechercher</button>
-            <a th:if="${recherche}" th:href="@{/utilisateurs}">Réinitialiser</a>
-        </form>
+        <!-- Barre d'actions et recherche -->
+        <div class="actions-bar">
+            <div class="search-box">
+                <div class="search-input-wrapper">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text"
+                           class="search-input"
+                           name="recherche"
+                           th:value="${recherche}"
+                           placeholder="Rechercher par nom ou email..."
+                           form="search-form">
+                </div>
+                <button type="submit" form="search-form" class="btn btn-primary">Rechercher</button>
+                <a th:if="${recherche}" th:href="@{/utilisateurs}" class="btn btn-secondary">Réinitialiser</a>
+            </div>
+            <a th:href="@{/utilisateurs/nouveau}" class="btn btn-primary">
+                <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Nouvel utilisateur
+            </a>
+        </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Email</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="utilisateur : ${utilisateurs}">
-                    <td th:text="${utilisateur.nom}">Nom</td>
-                    <td th:text="${utilisateur.email}">email@example.com</td>
-                    <td>
-                        <a th:href="@{/utilisateurs/{id}(id=${utilisateur.id})}">Voir</a>
-                        <a th:href="@{/utilisateurs/{id}/edit(id=${utilisateur.id})}">Modifier</a>
-                        <form th:action="@{/utilisateurs/{id}/delete(id=${utilisateur.id})}" method="post" style="display:inline;">
-                            <button type="submit" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">Supprimer</button>
-                        </form>
-                    </td>
-                </tr>
-                <tr th:if="${utilisateurs.isEmpty()}">
-                    <td colspan="3">Aucun utilisateur trouvé.</td>
-                </tr>
-            </tbody>
-        </table>
+        <form id="search-form" method="get" th:action="@{/utilisateurs}" class="hidden-form"></form>
+
+        <!-- Liste des utilisateurs -->
+        <div th:if="${utilisateurs.isEmpty()}" class="empty-state">
+            <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+            </svg>
+            <h3 class="empty-state-title">Aucun utilisateur trouvé</h3>
+            <p class="empty-state-text" th:text="${recherche != null and !recherche.isEmpty()} ? |Aucun résultat pour &quot;${recherche}&quot;| : 'Commencez par ajouter un utilisateur'"></p>
+            <a th:if="${!recherche}" th:href="@{/utilisateurs/nouveau}" class="btn btn-primary">Ajouter un utilisateur</a>
+        </div>
+
+        <div th:unless="${utilisateurs.isEmpty()}" class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="utilisateur : ${utilisateurs}">
+                        <td>
+                            <a th:href="@{/utilisateurs/{id}(id=${utilisateur.id})}"
+                               th:text="${utilisateur.nom}"
+                               class="table-link-strong">
+                                Nom
+                            </a>
+                        </td>
+                        <td th:text="${utilisateur.email}">email@example.com</td>
+                        <td>
+                            <div class="actions">
+                                <a th:href="@{/utilisateurs/{id}(id=${utilisateur.id})}" class="btn btn-ghost btn-sm">Voir</a>
+                                <a th:href="@{/utilisateurs/{id}/edit(id=${utilisateur.id})}" class="btn btn-ghost btn-sm">Modifier</a>
+                                <form th:action="@{/utilisateurs/{id}/delete(id=${utilisateur.id})}" method="post" class="inline-form">
+                                    <button type="submit"
+                                            class="btn btn-ghost btn-sm btn-text-danger"
+                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
+                                        Supprimer
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </main>
 </body>
 </html>
