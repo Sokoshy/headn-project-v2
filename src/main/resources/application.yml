@@ -42,6 +42,13 @@ server:
   error:
     include-message: always
     include-binding-errors: always
+    path: /error
+    whitelabel:
+      enabled: false
+
+# Configuration Spring MVC
+spring.mvc:
+  throw-exception-if-no-handler-found: true
 
 # Configuration des logs
 logging:
