@@ -519,22 +519,22 @@ Livrable technique : `docs/phase-8-securite-robustesse.md`
 
 ### Checklist
 
-- [ ] Integrer Spring Security
-- [ ] Activer la protection CSRF
-- [ ] Securiser les actions destructives en POST
-- [ ] Mettre en place `@ControllerAdvice`
-- [ ] Introduire `@Valid`
-- [ ] Traiter `BindingResult`
-- [ ] Creer des pages 404 propres
-- [ ] Creer des pages 500 propres
-- [ ] Uniformiser les messages techniques et fonctionnels
-- [ ] Verifier qu'aucune protection historique n'est retiree trop tot, notamment pendant la transition depuis `CSRFUtil.java` et les controles partiels actuels
+- [x] Integrer Spring Security
+- [x] Activer la protection CSRF
+- [x] Securiser les actions destructives en POST
+- [x] Mettre en place `@ControllerAdvice`
+- [x] Introduire `@Valid`
+- [x] Traiter `BindingResult`
+- [x] Creer des pages 404 propres
+- [x] Creer des pages 500 propres
+- [x] Uniformiser les messages techniques et fonctionnels
+- [x] Verifier qu'aucune protection historique n'est retiree trop tot, notamment pendant la transition depuis `CSRFUtil.java` et les controles partiels actuels
 
 ### Critere de sortie
 
-- [ ] La securite repose sur des mecanismes standards
-- [ ] Les erreurs sont gerees proprement
-- [ ] Les parcours critiques sont plus robustes
+- [x] La securite repose sur des mecanismes standards
+- [x] Les erreurs sont gerees proprement
+- [x] Les parcours critiques sont plus robustes
 
 ---
 
