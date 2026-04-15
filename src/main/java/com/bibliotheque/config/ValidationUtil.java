@@ -84,11 +84,11 @@ public class ValidationUtil {
             return "";
         }
         return input.trim()
+                   .replaceAll("&", "&amp;")
                    .replaceAll("<", "&lt;")
                    .replaceAll(">", "&gt;")
                    .replaceAll("\"", "&quot;")
-                   .replaceAll("'", "&#39;")
-                   .replaceAll("&", "&amp;");
+                   .replaceAll("'", "&#39;");
     }
     
     /**
