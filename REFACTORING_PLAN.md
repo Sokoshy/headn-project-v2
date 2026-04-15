@@ -548,36 +548,36 @@ Livrable technique : `docs/phase-9-tests-validation-nettoyage.md`
 
 ### Checklist tests
 
-- [ ] Ajouter des tests unitaires de services
-- [ ] Ajouter des tests de repositories
-- [ ] Ajouter des tests de controllers
-- [ ] Tester les parcours critiques
-- [ ] Tester les cas d'erreur importants
+- [x] Ajouter des tests unitaires de services
+- [x] Ajouter des tests de repositories
+- [x] Ajouter des tests de controllers
+- [x] Tester les parcours critiques
+- [x] Tester les cas d'erreur importants
 
 ### Checklist validation
 
-- [ ] Verifier `mise run build`
-- [ ] Verifier `mise run test`
-- [ ] Verifier `mise run dev`
-- [ ] Verifier le demarrage applicatif
-- [ ] Verifier les migrations Flyway
-- [ ] Verifier les routes principales
-- [ ] Verifier les parcours metier principaux
+- [x] Verifier `mise run build`
+- [x] Verifier `mise run test`
+- [x] Verifier `mise run dev`
+- [x] Verifier le demarrage applicatif
+- [x] Verifier les migrations Flyway
+- [x] Verifier les routes principales
+- [x] Verifier les parcours metier principaux
 
 ### Checklist nettoyage
 
-- [ ] Supprimer les anciens Servlets devenus inutiles
-- [ ] Supprimer les JSP obsoletes uniquement une fois toutes les vues Thymeleaf equivalentes validees
-- [ ] Supprimer les DAO historiques
-- [ ] Supprimer les configurations mortes
-- [ ] Verifier `.gitignore`
-- [ ] Nettoyer les artefacts residuels
+- [x] Supprimer les anciens Servlets devenus inutiles
+- [x] Supprimer les JSP obsoletes uniquement une fois toutes les vues Thymeleaf equivalentes validees
+- [x] Supprimer les DAO historiques
+- [x] Supprimer les configurations mortes
+- [x] Verifier `.gitignore`
+- [x] Nettoyer les artefacts residuels
 
 ### Critere de sortie
 
-- [ ] Le projet est propre
-- [ ] Le socle historique peut etre retire
-- [ ] La cible UX et technique est atteinte
+- [x] Le projet est propre
+- [x] Le socle historique peut etre retire
+- [x] La cible UX et technique est atteinte
 
 ---
 
