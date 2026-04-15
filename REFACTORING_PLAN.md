@@ -595,16 +595,16 @@ Le design doit etre :
 
 ### 8.2 Checklist design system
 
-- [ ] Definir une palette stable
-- [ ] Definir une echelle d'espacements
-- [ ] Definir les styles de boutons
-- [ ] Definir les styles de formulaires
-- [ ] Definir les styles de tableaux
-- [ ] Definir les badges de statut
-- [ ] Definir les styles des messages
-- [ ] Definir les etats vides
-- [ ] Definir les breakpoints responsive
-- [ ] Centraliser les tokens UI
+- [x] Definir une palette stable
+- [x] Definir une echelle d'espacements
+- [x] Definir les styles de boutons
+- [x] Definir les styles de formulaires
+- [x] Definir les styles de tableaux
+- [x] Definir les badges de statut
+- [x] Definir les styles des messages
+- [x] Definir les etats vides
+- [x] Definir les breakpoints responsive
+- [x] Centraliser les tokens UI
 
 ---
 
