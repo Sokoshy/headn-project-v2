@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/main :: layout (~{::title}, ~{::content})}">
+      th:replace="~{layout/main :: layout (${livre.id != null} ? 'Modifier un livre' : 'Ajouter un livre', ~{::content})}">
 <head>
     <title th:text="${livre.id != null} ? 'Modifier un livre' : 'Ajouter un livre'">Formulaire</title>
 </head>
