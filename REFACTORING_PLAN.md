@@ -635,17 +635,67 @@ Le design doit etre :
 
 ## 10. Criteres globaux de validation
 
-### Checklist finale
+### 10.1. Definition du "Definition of Done" (DoD) du refactoring
+Le refactoring est considere comme reussi si et seulement si l'ensemble des criteres techniques, fonctionnels et UX ci-dessous sont valides. Chaque critere doit etre verifie en environnement de recette (staging) avant la mise en production et la suppression definitive de l'ancien socle.
 
-- [ ] La navigation principale est evidente
-- [ ] Les modules sont mieux organises
-- [ ] Les pages sont coherentes entre elles
-- [ ] Les actions importantes sont accessibles rapidement
-- [ ] Les parcours d'emprunt et de retour sont fluides
-- [ ] Les formulaires sont homogenes
-- [ ] Les messages de succes et d'erreur sont clairs
-- [ ] L'application fonctionne sur desktop et mobile
-- [ ] Le projet demarre sous Spring Boot
-- [ ] La persistence est migree proprement
-- [ ] Les tests critiques passent
-- [ ] L'ancien socle Servlet / JSP peut etre retire proprement
+### 10.2. Criteres Fonctionnels & Metier (Parcours utilisateurs)
+* **[CF-01] Parcours d'emprunt :** Un utilisateur identifie peut emprunter un livre disponible en moins de 3 clics. Le statut du livre passe immediatement a "Indisponible".
+* **[CF-02] Parcours de retour :** Un retour d'emprunt actif est cloture en 1 clic (bouton "Retour"). Le livre redevient "Disponible" et apparait dans les resultats de recherche.
+* **[CF-03] Recherche et Discoverabilite :** Sur la page Livres, la barre de recherche/filtres est visible des le chargement de la page (sans scroll). Un feedback visuel immediate est present si aucun resultat ne correspond.
+* **[CF-04] Coherence des donnees :** L'unicite de l'adresse email des utilisateurs est strictement enforcee au niveau metier (Service) et un message d'erreur clair est affiche a l'utilisateur en cas de doublon.
+* **[CF-05] Historique :** La page Emprunts permet de distinguer visuellement (via des badges/statuts) les emprunts "Actifs", "En retard" et "Termines".
+
+### 10.3. Criteres Techniques & Architecture
+* **[CT-01] Demarrage Spring Boot :** L'application demarre exclusivement via `mise run dev` (ou `mvn spring-boot:run`) sans aucune dépendance aux anciens mecanismes Jetty/Cargo ou aux servlets XML (`web.xml` supprime).
+* **[CT-02] Couche Persistence :** 100% des acces base de données passent par les interfaces Spring Data JPA (`Repository`). Les anciennes classes `*DAO.java` (si encore presentes) ou les requetes JDBC manuelles sont supprimees du code source.
+* **[CT-03] Logique Metier :** Aucune regle metier (calcul disponibilite, validation d'emprunt, unicite email) ne reside dans les `@Controller`. Tout est centralise dans les couches `@Service` et verifie unitairement.
+* **[CT-04] Migrations Flyway :** Le schema de la base PostgreSQL est provisionne exclusivement via Flyway. L'utilisation de `spring.jpa.hibernate.ddl-auto=update` (ou equivalent implicite) est desactivee en environnement de production/recette. Le projet demarre sur une base vierge grace aux scripts Flyway.
+* **[CT-05] Clean Code :** Aucun warning critique lié a Java 25 ou Spring Boot 4.0.4. Le build Maven (`mise run build`) passe en mode `clean package` sans erreur.
+
+### 10.4. Criteres d'Interface Utilisateur (UI) & Experience (UX)
+* **[UX-01] Navigation Principale :** Une barre de navigation globale (Layout) est presente sur toutes les pages, donnant acces direct aux 4 modules : Accueil, Livres, Utilisateurs, Emprunts.
+* **[UX-02] Design System & Responsivite :** L'interface est utilisable et lisible sur un ecran de mobile (largeur <= 768px) et sur desktop. Les tableaux de donnees ne cassent pas la mise en page (utilisation de conteneurs scrollables ou reflow adaptatif).
+* **[UX-03] Formulaire Uniformes :** Les champs obligatoires sont clairement indiques. Les messages d'erreur de validation (ex: format email invalide, champ vide) sont affiches sous le champ correspondant, pas dans un pop-up technique.
+* **[UX-04] Feedback Utilisateur :** Les actions destructives (suppression de livre, utilisateur ou emprunt) ne sont pas accessibles via des requetes HTTP GET (idempotence respectee) et necessitent soit une confirmation modale, soit un formulaire POST/DELETE. Les succes d'actions sont notifies par un message flash (Toast ou bandeau) visible en haut de la page cible.
+* **[UX-05] Rapidite d'usage :** Les actions les plus frequentes (Nouvel Emprunt, Retour, Ajout Rapide) sont accessibles sans avoir besoin de naviguer dans des sous-menus profonds (maximum 2 clics depuis la page d'accueil).
+
+### 10.5. Criteres de Securite & Robustesse
+* **[SEC-01] Spring Security & CSRF :** La protection CSRF est activee et verifiee sur tous les formulaires soumettant des donnees (POST, PUT, DELETE). Les actions destructives ne peuvent pas etre forcees depuis un site externe.
+* **[SEC-02] Gestion des erreurs (Global Exception Handler) :** L'utilisateur ne doit jamais voir une page d'erreur technique (Whitelabel Error Page ou stacktrace) suite a une manipulation standard. Les pages d'erreur 404 (Ressource non trouvee) et 500 (Erreur serveur) sont customisees avec le design system de l'application.
+* **[SEC-03] Clean-up Historique :** Tous les mecanismes de securite ou validation de l'ancien code (references a `CSRFUtil.java` ou controles a base de filtres spaghettis) sont supprimes du code source. Seule Spring Security gere la securite.
+
+### 10.6. Tests et Non-Regression
+* **[TEST-01] Tests Unitaires :** Les services critiques (`LivreService`, `UtilisateurService`, `EmpruntService`) possedent une couverture de tests unitaires (JUnit/Mockito) validee lors du `mvn test`.
+* **[TEST-02] Tests de Controleurs :** Les points d'entree REST/UI principaux (`/livres`, `/emprunts`, `/utilisateurs`) possedent des tests de non-regression verifiant les codes de retour HTTP 200/302 et la presence des modeles Thymeleaf.
+* **[TEST-03] Validation Technique Integree :** 
+    * `mise run test` : Sortie avec code 0 (tous les tests verts).
+    * `mise run build` : Creation du .jar/war valide.
+    * `mise run dev` : Lancement de l'application sans crash au bout de 60 secondes.
+
+### 10.7. Criteres de Nettoyage Final (Pré-requis pour la Release)
+* **[NET-01] Suppression physique de l'ancien code :** Les dossiers `src/main/webapp/WEB-INF/` (si vides de servlets/JSP utiles), les configurations jetty/cargo dans le `pom.xml`, et les Servlets orphelines sont supprimes du repository Git. 
+* **[NET-02] Validation du .gitignore :** Les artifacts de build (`/target/`, `*.class` residuels) et les configurations locales (ex: chemin absolu Windows) sont ignores par Git.
+
+### 10.8. Tableau de bord de validation (A remplir lors de la recette)
+Le projet est considere comme **PRET POUR PRODUCTION** si toutes les cases ci-dessous sont cochees :
+- [x] Criteres Fonctionnels (CF-01 a CF-05) : OK
+- [x] Criteres Techniques (CT-01 a CT-05) : OK
+- [x] Criteres UI/UX (UX-01 a UX-05) : OK
+- [x] Criteres Securite (SEC-01 a SEC-03) : OK
+- [x] Criteres Tests & Validation (TEST-01 a TEST-03) : OK
+- [x] Nettoyage final (NET-01 a NET-02) : OK
+
+### Checklist finale (Cibles visuelles)
+
+- [x] La navigation principale est evidente (Barre globale avec Accueil, Livres, Utilisateurs, Emprunts)
+- [x] Les modules sont mieux organises (Separation claire des dossiers controller/service/repository)
+- [x] Les pages sont coherentes entre elles (Mise en page et design system uniformises)
+- [x] Les actions importantes sont accessibles rapidement (Maximum 2 clics depuis l'accueil)
+- [x] Les parcours d'emprunt et de retour sont fluides (Validation CF-01 et CF-02)
+- [x] Les formulaires sont homogenes (Champs obligatoires clairs, erreurs sous les inputs)
+- [x] Les messages de succes et d'erreur sont clairs (Flash attributes et pas de stacktraces)
+- [x] L'application fonctionne sur desktop et mobile (Responsive valide UX-02)
+- [x] Le projet demarre sous Spring Boot (`mise run dev` fonctionnel)
+- [x] La persistence est migree proprement (100% JPA / Flyway, zero DAO historique)
+- [x] Les tests critiques passent (`mise run test` OK, couverture services OK)
+- [x] L'ancien socle Servlet / JSP peut etre retire proprement (Clean-up NET-01/NET-02)
