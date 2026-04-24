@@ -79,11 +79,10 @@ class CustomErrorControllerTest {
     }
 
     @Test
-    void errorHtml_delegueVersError() {
+    void errorByStatus_retourneLaVueCorrespondante() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setAttribute(RequestDispatcher.ERROR_STATUS_CODE, 404);
 
-        ModelAndView mav = controller.errorHtml(request);
+        ModelAndView mav = controller.errorByStatus(404, request);
 
         assertThat(mav.getViewName()).isEqualTo("error/404");
         assertThat(mav.getModel().get("status")).isEqualTo(404);
