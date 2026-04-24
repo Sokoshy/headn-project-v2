@@ -1,6 +1,9 @@
 spring:
   application:
     name: bibliotheque-app
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 
   # Configuration de la base de données PostgreSQL
   datasource:
