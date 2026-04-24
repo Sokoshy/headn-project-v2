@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/main :: layout (~{::title}, ~{::content})}">
+      th:replace="~{layout/main :: layout (${utilisateur.nom}, ~{::content})}">
 <head>
     <title th:text="${utilisateur.nom}">Détail</title>
 </head>
