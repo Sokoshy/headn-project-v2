@@ -9,5 +9,7 @@ public record LoanHistory(
         Long userId,
         String userName,
         LocalDate borrowDate,
-        LocalDate returnDate
+        LocalDate returnDate,
+        LocalDate expectedReturnDate,
+        LoanStatus status
 ) {}
