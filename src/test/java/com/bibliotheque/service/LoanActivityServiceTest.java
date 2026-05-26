@@ -230,6 +230,118 @@ class LoanActivityServiceTest {
         assertThat(activity.history()).hasSize(1);
     }
 
+    // ---- new tests: status filtering ----
+
+    @Test
+    void getLoanActivity_filterActifs_showsOnlyActiveLoansWithoutOverdue() {
+        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
+        actif.setDateRetourPrevue(LocalDate.now().plusDays(25)); // not overdue
+
+        Emprunt enRetard = createActiveEntry(2L, "Bob", "1984", 40);
+        enRetard.setDateRetourPrevue(LocalDate.now().minusDays(10)); // overdue
+
+        Emprunt historique = createHistoryEntry(3L, "Charlie", "Fondation", 60, 30);
+
+        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(actif, enRetard, historique));
+
+        LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, "actifs");
+
+        assertThat(activity.activeLoans()).hasSize(1);
+        assertThat(activity.activeLoans().get(0).empruntId()).isEqualTo(1L);
+        assertThat(activity.activeLoans().get(0).status()).isEqualTo(LoanStatus.ACTIVE);
+        assertThat(activity.history()).isEmpty();
+    }
+
+    @Test
+    void getLoanActivity_filterEnRetard_showsOnlyOverdueActiveLoans() {
+        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
+        actif.setDateRetourPrevue(LocalDate.now().plusDays(25));
+
+        Emprunt enRetard = createActiveEntry(2L, "Bob", "1984", 40);
+        enRetard.setDateRetourPrevue(LocalDate.now().minusDays(10));
+
+        Emprunt historique = createHistoryEntry(3L, "Charlie", "Fondation", 60, 30);
+
+        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(actif, enRetard, historique));
+
+        LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, "en_retard");
+
+        assertThat(activity.activeLoans()).hasSize(1);
+        assertThat(activity.activeLoans().get(0).empruntId()).isEqualTo(2L);
+        assertThat(activity.activeLoans().get(0).status()).isEqualTo(LoanStatus.OVERDUE);
+        assertThat(activity.history()).isEmpty();
+    }
+
+    @Test
+    void getLoanActivity_filterTermines_showsOnlyReturnedLoans() {
+        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
+
+        // returned on time: expected=now+10, returned=now-5 (returned before expected)
+        Emprunt rendu = createHistoryEntry(2L, "Bob", "1984", 60, 5);
+        rendu.setDateRetourPrevue(LocalDate.now().plusDays(10));
+
+        // returned late: expected=now-50, returned=now-30 (returned after expected)
+        Emprunt renduEnRetard = createHistoryEntry(3L, "Charlie", "Fondation", 60, 30);
+        renduEnRetard.setDateRetourPrevue(LocalDate.now().minusDays(50));
+
+        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(actif, rendu, renduEnRetard));
+
+        LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, "termines");
+
+        assertThat(activity.activeLoans()).isEmpty();
+        assertThat(activity.history()).hasSize(1);
+        assertThat(activity.history().get(0).empruntId()).isEqualTo(2L);
+        assertThat(activity.history().get(0).status()).isEqualTo(LoanStatus.RETURNED);
+    }
+
+    @Test
+    void getLoanActivity_filterRendusEnRetard_showsOnlyLateReturnedLoans() {
+        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
+
+        // returned on time: expected=now+10, returned=now-5
+        Emprunt rendu = createHistoryEntry(2L, "Bob", "1984", 60, 5);
+        rendu.setDateRetourPrevue(LocalDate.now().plusDays(10));
+
+        // returned late: expected=now-50, returned=now-30
+        Emprunt renduEnRetard = createHistoryEntry(3L, "Charlie", "Fondation", 60, 30);
+        renduEnRetard.setDateRetourPrevue(LocalDate.now().minusDays(50));
+
+        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(actif, rendu, renduEnRetard));
+
+        LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, "rendus_en_retard");
+
+        assertThat(activity.activeLoans()).isEmpty();
+        assertThat(activity.history()).hasSize(1);
+        assertThat(activity.history().get(0).empruntId()).isEqualTo(3L);
+        assertThat(activity.history().get(0).status()).isEqualTo(LoanStatus.LATE_RETURN);
+    }
+
+    @Test
+    void getLoanActivity_filterTous_showsAllLoansLikeDefault() {
+        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
+        Emprunt historique = createHistoryEntry(2L, "Bob", "1984", 60, 30);
+
+        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(actif, historique));
+
+        LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, "tous");
+
+        assertThat(activity.activeLoans()).hasSize(1);
+        assertThat(activity.history()).hasSize(1);
+    }
+
+    @Test
+    void getLoanActivity_nullStatut_behavesLikeTous() {
+        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
+        Emprunt historique = createHistoryEntry(2L, "Bob", "1984", 60, 30);
+
+        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(actif, historique));
+
+        LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, null);
+
+        assertThat(activity.activeLoans()).hasSize(1);
+        assertThat(activity.history()).hasSize(1);
+    }
+
     // ---- new tests: count methods ----
 
     @Test
@@ -240,10 +352,11 @@ class LoanActivityServiceTest {
     }
 
     @Test
-    void countOverdueLoans_delegatesToRepository() {
-        when(empruntRepository.countEmpruntsEnRetard(LocalDate.now().minusDays(30))).thenReturn(2L);
+    void countOverdueLoans_countsActiveLoansPastExpectedReturnDate() {
+        when(empruntRepository.countByDateRetourIsNullAndDateRetourPrevueBefore(LocalDate.now()))
+                .thenReturn(3L);
 
-        assertThat(loanActivityService.countOverdueLoans()).isEqualTo(2L);
+        assertThat(loanActivityService.countOverdueLoans()).isEqualTo(3L);
     }
 
     // ---- helpers ----
@@ -258,6 +371,7 @@ class LoanActivityServiceTest {
         Emprunt e = new Emprunt(utilisateur, livre);
         e.setId(id);
         e.setDateEmprunt(LocalDate.now().minusDays(daysSinceBorrow));
+        e.setDateRetourPrevue(LocalDate.now().minusDays(daysSinceBorrow).plusDays(30));
         e.setDateRetour(LocalDate.now().minusDays(daysSinceReturn));
         return e;
     }
@@ -272,6 +386,7 @@ class LoanActivityServiceTest {
         Emprunt e = new Emprunt(utilisateur, livre);
         e.setId(id);
         e.setDateEmprunt(LocalDate.now().minusDays(daysSinceBorrow));
+        e.setDateRetourPrevue(LocalDate.now().plusDays(30));
         return e;
     }
 }

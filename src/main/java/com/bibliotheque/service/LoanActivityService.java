@@ -25,14 +25,20 @@ public class LoanActivityService {
     }
 
     public LoanActivity getLoanActivity() {
-        return getLoanActivity(null, null, 0);
+        return getLoanActivity(null, null, 0, null);
     }
 
     public LoanActivity getLoanActivity(String searchUser, String searchBook, int page) {
+        return getLoanActivity(searchUser, searchBook, page, null);
+    }
+
+    public LoanActivity getLoanActivity(String searchUser, String searchBook, int page, String statut) {
         List<Emprunt> all = empruntRepository.findAllWithDetails();
 
         List<ActiveLoan> activeLoans = new ArrayList<>();
         List<LoanHistory> history = new ArrayList<>();
+
+        String effectiveStatut = (statut == null || statut.isBlank()) ? "tous" : statut;
 
         for (Emprunt e : all) {
             if (e.estEnCours()) {
@@ -40,6 +46,27 @@ public class LoanActivityService {
             } else {
                 history.add(toLoanHistory(e));
             }
+        }
+
+        // Apply status filter
+        switch (effectiveStatut) {
+            case "actifs" -> {
+                activeLoans.removeIf(a -> a.status() == LoanStatus.OVERDUE);
+                history.clear();
+            }
+            case "en_retard" -> {
+                activeLoans.removeIf(a -> a.status() != LoanStatus.OVERDUE);
+                history.clear();
+            }
+            case "termines" -> {
+                activeLoans.clear();
+                history.removeIf(h -> h.status() != LoanStatus.RETURNED);
+            }
+            case "rendus_en_retard" -> {
+                activeLoans.clear();
+                history.removeIf(h -> h.status() != LoanStatus.LATE_RETURN);
+            }
+            // "tous" — no filter
         }
 
         boolean hasSearch = isNotBlank(searchUser) || isNotBlank(searchBook);
@@ -64,7 +91,7 @@ public class LoanActivityService {
     }
 
     public long countOverdueLoans() {
-        return empruntRepository.countEmpruntsEnRetard(java.time.LocalDate.now().minusDays(30));
+        return empruntRepository.countByDateRetourIsNullAndDateRetourPrevueBefore(java.time.LocalDate.now());
     }
 
     private List<LoanHistory> filterHistory(List<LoanHistory> history, String searchUser, String searchBook) {
@@ -101,7 +128,9 @@ public class LoanActivityService {
                 e.getUtilisateur().getId(),
                 e.getUtilisateur().getNom(),
                 e.getDateEmprunt(),
-                e.getDateRetour()
+                e.getDateRetour(),
+                e.getDateRetourPrevue(),
+                e.estRenduEnRetard() ? LoanStatus.LATE_RETURN : LoanStatus.RETURNED
         );
     }
 
