@@ -97,6 +97,25 @@ public class EmpruntService {
     }
 
     @Transactional
+    public Emprunt corrigerDateRetourPrevue(Long empruntId, LocalDate nouvelleDateRetourPrevue) {
+        if (nouvelleDateRetourPrevue == null) {
+            throw new com.bibliotheque.exception.DateRetourPrevueObligatoireException();
+        }
+        if (nouvelleDateRetourPrevue.isBefore(LocalDate.now())) {
+            throw new com.bibliotheque.exception.DateRetourPrevueDansLePasseException();
+        }
+
+        Emprunt emprunt = findById(empruntId);
+
+        if (!emprunt.estEnCours()) {
+            throw new EmpruntDejaRetourneException(empruntId);
+        }
+
+        emprunt.setDateRetourPrevue(nouvelleDateRetourPrevue);
+        return empruntRepository.save(emprunt);
+    }
+
+    @Transactional
     public Emprunt effectuerRetour(Long empruntId) {
         Emprunt emprunt = findById(empruntId);
 
@@ -114,8 +133,7 @@ public class EmpruntService {
     }
 
     public long countEnRetard() {
-        LocalDate dateLimit = LocalDate.now().minusDays(30);
-        return empruntRepository.countEmpruntsEnRetard(dateLimit);
+        return empruntRepository.countByDateRetourIsNullAndDateRetourPrevueBefore(LocalDate.now());
     }
 
     public long countTotal() {

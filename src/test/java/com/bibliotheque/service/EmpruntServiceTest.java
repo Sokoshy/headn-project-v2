@@ -180,6 +180,68 @@ class EmpruntServiceTest {
         assertThat(resultat.getDateRetour()).isEqualTo(LocalDate.now());
     }
 
+    // ---- corrigerDateRetourPrevue tests ----
+
+    @Test
+    void corrigerDateRetourPrevue_updatesDateOnActiveLoan() {
+        Emprunt emprunt = new Emprunt();
+        emprunt.setId(1L);
+        emprunt.setDateEmprunt(LocalDate.now().minusDays(10));
+        emprunt.setDateRetourPrevue(LocalDate.now().plusDays(20));
+
+        LocalDate nouvelleDate = LocalDate.now().plusDays(45);
+
+        when(empruntRepository.findById(1L)).thenReturn(Optional.of(emprunt));
+        when(empruntRepository.save(any(Emprunt.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Emprunt resultat = empruntService.corrigerDateRetourPrevue(1L, nouvelleDate);
+
+        assertThat(resultat.getDateRetourPrevue()).isEqualTo(nouvelleDate);
+    }
+
+    @Test
+    void corrigerDateRetourPrevue_rejectsCompletedLoan() {
+        Emprunt emprunt = new Emprunt();
+        emprunt.setId(1L);
+        emprunt.setDateEmprunt(LocalDate.now().minusDays(60));
+        emprunt.setDateRetour(LocalDate.now().minusDays(30));
+        emprunt.setDateRetourPrevue(LocalDate.now().minusDays(30));
+
+        when(empruntRepository.findById(1L)).thenReturn(Optional.of(emprunt));
+
+        assertThatThrownBy(() -> empruntService.corrigerDateRetourPrevue(1L, LocalDate.now().plusDays(30)))
+                .isInstanceOf(EmpruntDejaRetourneException.class);
+    }
+
+    @Test
+    void corrigerDateRetourPrevue_rejectsNullDate() {
+        assertThatThrownBy(() -> empruntService.corrigerDateRetourPrevue(1L, null))
+                .isInstanceOf(com.bibliotheque.exception.DateRetourPrevueObligatoireException.class);
+    }
+
+    @Test
+    void corrigerDateRetourPrevue_rejectsPastDate() {
+        assertThatThrownBy(() -> empruntService.corrigerDateRetourPrevue(1L, LocalDate.now().minusDays(1)))
+                .isInstanceOf(com.bibliotheque.exception.DateRetourPrevueDansLePasseException.class);
+    }
+
+    @Test
+    void corrigerDateRetourPrevue_acceptsToday() {
+        Emprunt emprunt = new Emprunt();
+        emprunt.setId(1L);
+        emprunt.setDateEmprunt(LocalDate.now().minusDays(10));
+        emprunt.setDateRetourPrevue(LocalDate.now().plusDays(20));
+
+        when(empruntRepository.findById(1L)).thenReturn(Optional.of(emprunt));
+        when(empruntRepository.save(any(Emprunt.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Emprunt resultat = empruntService.corrigerDateRetourPrevue(1L, LocalDate.now());
+
+        assertThat(resultat.getDateRetourPrevue()).isEqualTo(LocalDate.now());
+    }
+
     @Test
     void effectuerRetour_savesReturnedLoanWithoutMutatingBook() {
         Livre livre = new Livre("Dune", "Frank Herbert");
