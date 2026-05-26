@@ -73,6 +73,13 @@ public class EmpruntService {
 
     @Transactional
     public Emprunt creer(Long utilisateurId, Long livreId, LocalDate dateRetourPrevue) {
+        if (dateRetourPrevue == null) {
+            throw new com.bibliotheque.exception.DateRetourPrevueObligatoireException();
+        }
+        if (dateRetourPrevue.isBefore(LocalDate.now())) {
+            throw new com.bibliotheque.exception.DateRetourPrevueDansLePasseException();
+        }
+
         Utilisateur utilisateur = utilisateurService.findById(utilisateurId);
         Livre livre = livreRepository.findByIdForUpdate(livreId)
                 .orElseThrow(() -> new com.bibliotheque.exception.LivreNotFoundException(livreId));
@@ -80,9 +87,7 @@ public class EmpruntService {
         verifierDisponibiliteLivre(livre);
 
         Emprunt emprunt = new Emprunt(utilisateur, livre);
-        if (dateRetourPrevue != null) {
-            emprunt.setDateRetourPrevue(dateRetourPrevue);
-        }
+        emprunt.setDateRetourPrevue(dateRetourPrevue);
 
         try {
             return empruntRepository.saveAndFlush(emprunt);

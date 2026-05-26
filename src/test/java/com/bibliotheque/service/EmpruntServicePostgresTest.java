@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.time.LocalDate;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -44,7 +46,7 @@ class EmpruntServicePostgresTest extends PostgresIntegrationTestBase {
         Utilisateur utilisateur = utilisateurRepository.save(new Utilisateur("Alice", "alice-service@example.com"));
         Livre livre = livreRepository.save(new Livre("Dune", "Frank Herbert"));
 
-        Emprunt emprunt = empruntService.creer(utilisateur.getId(), livre.getId(), null);
+        Emprunt emprunt = empruntService.creer(utilisateur.getId(), livre.getId(), LocalDate.now().plusDays(30));
 
         Livre livreApresCreation = livreRepository.findById(livre.getId()).orElseThrow();
         assertThat(emprunt.getId()).isNotNull();
@@ -52,7 +54,7 @@ class EmpruntServicePostgresTest extends PostgresIntegrationTestBase {
         assertThat(livreRepository.findDisponibles()).isEmpty();
         assertThat(empruntRepository.countByDateRetourIsNull()).isEqualTo(1);
 
-        assertThatThrownBy(() -> empruntService.creer(utilisateur.getId(), livre.getId(), null))
+        assertThatThrownBy(() -> empruntService.creer(utilisateur.getId(), livre.getId(), LocalDate.now().plusDays(30)))
                 .isInstanceOf(LivreNonDisponibleException.class);
 
         empruntService.effectuerRetour(emprunt.getId());

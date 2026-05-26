@@ -68,6 +68,7 @@ class EmpruntServiceTest {
         Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
         Livre livre = new Livre("Dune", "Frank Herbert");
         livre.setId(2L);
+        LocalDate datePrevue = LocalDate.now().plusDays(30);
 
         when(utilisateurService.findById(1L)).thenReturn(utilisateur);
         when(livreRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(livre));
@@ -75,7 +76,7 @@ class EmpruntServiceTest {
         when(empruntRepository.saveAndFlush(any(Emprunt.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        Emprunt resultat = empruntService.creer(1L, 2L, null);
+        Emprunt resultat = empruntService.creer(1L, 2L, datePrevue);
 
         assertThat(resultat.getLivre()).isSameAs(livre);
         assertThat(resultat.getUtilisateur()).isSameAs(utilisateur);
@@ -87,14 +88,47 @@ class EmpruntServiceTest {
         Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
         Livre livre = new Livre("Dune", "Frank Herbert");
         livre.setId(2L);
+        LocalDate datePrevue = LocalDate.now().plusDays(30);
 
         when(utilisateurService.findById(1L)).thenReturn(utilisateur);
         when(livreRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(livre));
         when(empruntRepository.existsByLivreAndDateRetourIsNull(livre)).thenReturn(true);
 
-        assertThatThrownBy(() -> empruntService.creer(1L, 2L, null))
+        assertThatThrownBy(() -> empruntService.creer(1L, 2L, datePrevue))
                 .isInstanceOf(LivreNonDisponibleException.class)
                 .hasMessageContaining("Dune");
+    }
+
+    @Test
+    void creer_rejectsWhenDateRetourPrevueIsNull() {
+        assertThatThrownBy(() -> empruntService.creer(1L, 2L, null))
+                .isInstanceOf(com.bibliotheque.exception.DateRetourPrevueObligatoireException.class)
+                .hasMessage("La date de retour prévue est obligatoire.");
+    }
+
+    @Test
+    void creer_rejectsWhenDateRetourPrevueIsInThePast() {
+        assertThatThrownBy(() -> empruntService.creer(1L, 2L, LocalDate.now().minusDays(1)))
+                .isInstanceOf(com.bibliotheque.exception.DateRetourPrevueDansLePasseException.class)
+                .hasMessage("La date de retour prévue doit être aujourd'hui ou une date future.");
+    }
+
+    @Test
+    void creer_acceptsDateRetourPrevueEqualToToday() {
+        Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
+        Livre livre = new Livre("Dune", "Frank Herbert");
+        livre.setId(2L);
+        LocalDate today = LocalDate.now();
+
+        when(utilisateurService.findById(1L)).thenReturn(utilisateur);
+        when(livreRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(livre));
+        when(empruntRepository.existsByLivreAndDateRetourIsNull(livre)).thenReturn(false);
+        when(empruntRepository.saveAndFlush(any(Emprunt.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Emprunt resultat = empruntService.creer(1L, 2L, today);
+
+        assertThat(resultat.getDateRetourPrevue()).isEqualTo(today);
     }
 
     @Test
@@ -102,6 +136,7 @@ class EmpruntServiceTest {
         Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
         Livre livre = new Livre("Dune", "Frank Herbert");
         livre.setId(2L);
+        LocalDate datePrevue = LocalDate.now().plusDays(30);
 
         when(utilisateurService.findById(1L)).thenReturn(utilisateur);
         when(livreRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(livre));
@@ -109,7 +144,7 @@ class EmpruntServiceTest {
         when(empruntRepository.saveAndFlush(any(Emprunt.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate active loan"));
 
-        assertThatThrownBy(() -> empruntService.creer(1L, 2L, null))
+        assertThatThrownBy(() -> empruntService.creer(1L, 2L, datePrevue))
                 .isInstanceOf(LivreNonDisponibleException.class)
                 .hasMessageContaining("Dune");
     }

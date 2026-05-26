@@ -62,6 +62,7 @@ class LoanActivityServiceTest {
         Emprunt enRetard = new Emprunt(alice, livre3);
         enRetard.setId(30L);
         enRetard.setDateEmprunt(LocalDate.now().minusDays(40));
+        enRetard.setDateRetourPrevue(LocalDate.now().minusDays(10));
 
         when(empruntRepository.findAllWithDetails())
                 .thenReturn(List.of(actif, historique, enRetard));
