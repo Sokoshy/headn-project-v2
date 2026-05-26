@@ -39,7 +39,7 @@ public class Emprunt {
     @Column(name = "date_retour")
     private LocalDate dateRetour;
 
-    @Column(name = "date_retour_prevue")
+    @Column(name = "date_retour_prevue", nullable = false)
     private LocalDate dateRetourPrevue;
 
     public Emprunt() {
