@@ -70,14 +70,15 @@ class EmpruntControllerTest {
         ActiveLoan actif = new ActiveLoan(10L, 1L, "Dune", 1L, "Alice",
                 LocalDate.now().minusDays(5), null, LoanStatus.ACTIVE);
         LoanHistory hist = new LoanHistory(20L, 2L, "1984", 2L, "Bob",
-                LocalDate.now().minusDays(60), LocalDate.now().minusDays(40));
+                LocalDate.now().minusDays(60), LocalDate.now().minusDays(40),
+                LocalDate.now().minusDays(30), LoanStatus.RETURNED);
         LoanActivity activity = new LoanActivity(List.of(actif), List.of(hist), 0, 1, 1L, false);
 
         SelectableBook book = new SelectableBook(1L, "Fondation", "Isaac Asimov");
         SelectableUser user = new SelectableUser(1L, "Alice");
         LoanPreparation preparation = new LoanPreparation(List.of(book), List.of(user), LocalDate.now().plusDays(30));
 
-        when(loanActivityService.getLoanActivity(null, null, 0)).thenReturn(activity);
+        when(loanActivityService.getLoanActivity(null, null, 0, "tous")).thenReturn(activity);
         when(loanPreparationService.getPreparation()).thenReturn(preparation);
 
         mockMvc.perform(get("/emprunts"))
@@ -91,7 +92,7 @@ class EmpruntControllerTest {
     void liste_passesSearchParamsToService() throws Exception {
         LoanActivity activity = new LoanActivity(List.of(), List.of(), 0, 1, 0L, true);
 
-        when(loanActivityService.getLoanActivity("Alice", "Dune", 0)).thenReturn(activity);
+        when(loanActivityService.getLoanActivity("Alice", "Dune", 0, "tous")).thenReturn(activity);
         when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
 
         mockMvc.perform(get("/emprunts")
@@ -106,7 +107,7 @@ class EmpruntControllerTest {
     void liste_passesPageParamToService() throws Exception {
         LoanActivity activity = new LoanActivity(List.of(), List.of(), 2, 3, 25L, false);
 
-        when(loanActivityService.getLoanActivity(null, null, 2)).thenReturn(activity);
+        when(loanActivityService.getLoanActivity(null, null, 2, "tous")).thenReturn(activity);
         when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
 
         mockMvc.perform(get("/emprunts").param("page", "2"))
@@ -185,6 +186,60 @@ class EmpruntControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/emprunts"))
                 .andExpect(flash().attributeExists("error"));
+    }
+
+    @Test
+    void corrigerDateRetourPrevue_succesRedirigeVersDetail() throws Exception {
+        Livre livre = new Livre("Dune", "Frank Herbert");
+        Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
+        Emprunt emprunt = new Emprunt(utilisateur, livre);
+        emprunt.setId(1L);
+        emprunt.setDateRetourPrevue(LocalDate.now().plusDays(30));
+        when(empruntService.corrigerDateRetourPrevue(eq(1L), any(LocalDate.class))).thenReturn(emprunt);
+
+        mockMvc.perform(post("/emprunts/1/date-retour-prevue")
+                        .param("dateRetourPrevue", LocalDate.now().plusDays(45).toString())
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/emprunts/1"))
+                .andExpect(flash().attributeExists("success"));
+    }
+
+    @Test
+    void corrigerDateRetourPrevue_erreurRedirigeVersDetail() throws Exception {
+        when(empruntService.corrigerDateRetourPrevue(eq(1L), any(LocalDate.class)))
+                .thenThrow(new com.bibliotheque.exception.DateRetourPrevueDansLePasseException());
+
+        mockMvc.perform(post("/emprunts/1/date-retour-prevue")
+                        .param("dateRetourPrevue", LocalDate.now().minusDays(1).toString())
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/emprunts/1"))
+                .andExpect(flash().attributeExists("error"));
+    }
+
+    @Test
+    void liste_passesStatutParamToService() throws Exception {
+        LoanActivity activity = new LoanActivity(List.of(), List.of(), 0, 1, 0L, false);
+
+        when(loanActivityService.getLoanActivity(null, null, 0, "en_retard")).thenReturn(activity);
+        when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
+
+        mockMvc.perform(get("/emprunts").param("statut", "en_retard"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("statut", "en_retard"));
+    }
+
+    @Test
+    void liste_passesStatutDefaultTous() throws Exception {
+        LoanActivity activity = new LoanActivity(List.of(), List.of(), 0, 1, 0L, false);
+
+        when(loanActivityService.getLoanActivity(null, null, 0, "tous")).thenReturn(activity);
+        when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
+
+        mockMvc.perform(get("/emprunts"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("statut", "tous"));
     }
 
     private LoanPreparation emptyPreparation() {

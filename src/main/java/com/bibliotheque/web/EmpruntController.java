@@ -35,12 +35,14 @@ public class EmpruntController {
     public String liste(@RequestParam(required = false) String searchUser,
                         @RequestParam(required = false) String searchBook,
                         @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "tous") String statut,
                         Model model) {
         model.addAttribute("loanActivity",
-                loanActivityService.getLoanActivity(searchUser, searchBook, page));
+                loanActivityService.getLoanActivity(searchUser, searchBook, page, statut));
         model.addAttribute("loanPreparation", loanPreparationService.getPreparation());
         model.addAttribute("searchUser", searchUser);
         model.addAttribute("searchBook", searchBook);
+        model.addAttribute("statut", statut);
         return "emprunts/liste";
     }
 
@@ -64,6 +66,21 @@ public class EmpruntController {
         } catch (BusinessException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/emprunts";
+        }
+    }
+
+    @PostMapping("/emprunts/{id}/date-retour-prevue")
+    public String corrigerDateRetourPrevue(@PathVariable Long id,
+                                            @RequestParam(value = "dateRetourPrevue", required = false) LocalDate dateRetourPrevue,
+                                            RedirectAttributes redirectAttributes) {
+        try {
+            Emprunt emprunt = empruntService.corrigerDateRetourPrevue(id, dateRetourPrevue);
+            redirectAttributes.addFlashAttribute("success",
+                    "Date de retour prévue mise à jour pour \"" + emprunt.getLivre().getTitre() + "\"");
+            return "redirect:/emprunts/" + id;
+        } catch (BusinessException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/emprunts/" + id;
         }
     }
 
