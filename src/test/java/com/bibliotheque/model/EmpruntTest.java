@@ -39,34 +39,38 @@ class EmpruntTest {
     }
 
     @Test
-    void estEnRetard_empruntDePlusDe30Jours_retourneVrai() {
+    void estEnRetard_empruntActifAvecDatePrevueDepassee_retourneVrai() {
         Emprunt emprunt = new Emprunt();
-        emprunt.setDateEmprunt(LocalDate.now().minusDays(31));
+        emprunt.setDateEmprunt(LocalDate.now().minusDays(5));
+        emprunt.setDateRetourPrevue(LocalDate.now().minusDays(1));
 
         assertThat(emprunt.estEnRetard()).isTrue();
     }
 
     @Test
-    void estEnRetard_empruntDeMoinsDe30Jours_retourneFaux() {
-        Emprunt emprunt = new Emprunt();
-        emprunt.setDateEmprunt(LocalDate.now().minusDays(29));
-
-        assertThat(emprunt.estEnRetard()).isFalse();
-    }
-
-    @Test
-    void estEnRetard_empruntDeExactement30Jours_retourneFaux() {
-        Emprunt emprunt = new Emprunt();
-        emprunt.setDateEmprunt(LocalDate.now().minusDays(30));
-
-        assertThat(emprunt.estEnRetard()).isFalse();
-    }
-
-    @Test
-    void estEnRetard_empruntRetourne_retourneFaux() {
+    void estEnRetard_empruntRenduAvecDatePrevueDepassee_retourneFaux() {
         Emprunt emprunt = new Emprunt();
         emprunt.setDateEmprunt(LocalDate.now().minusDays(60));
-        emprunt.setDateRetour(LocalDate.now().minusDays(20));
+        emprunt.setDateRetourPrevue(LocalDate.now().minusDays(30));
+        emprunt.setDateRetour(LocalDate.now().minusDays(5));
+
+        assertThat(emprunt.estEnRetard()).isFalse();
+    }
+
+    @Test
+    void estEnRetard_empruntActifAvecDatePrevueAujourdhui_retourneFaux() {
+        Emprunt emprunt = new Emprunt();
+        emprunt.setDateEmprunt(LocalDate.now().minusDays(5));
+        emprunt.setDateRetourPrevue(LocalDate.now());
+
+        assertThat(emprunt.estEnRetard()).isFalse();
+    }
+
+    @Test
+    void estEnRetard_empruntActifAvecDatePrevueFuture_retourneFaux() {
+        Emprunt emprunt = new Emprunt();
+        emprunt.setDateEmprunt(LocalDate.now().minusDays(5));
+        emprunt.setDateRetourPrevue(LocalDate.now().plusDays(10));
 
         assertThat(emprunt.estEnRetard()).isFalse();
     }
@@ -113,6 +117,54 @@ class EmpruntTest {
         Emprunt emprunt = new Emprunt();
 
         assertThat(emprunt.getDateRetourPrevue()).isNull();
+    }
+
+    @Test
+    void estRenduEnRetard_empruntRenduApresDatePrevue_retourneVrai() {
+        Emprunt emprunt = new Emprunt();
+        emprunt.setDateEmprunt(LocalDate.now().minusDays(60));
+        emprunt.setDateRetourPrevue(LocalDate.now().minusDays(30));
+        emprunt.setDateRetour(LocalDate.now().minusDays(5));
+
+        assertThat(emprunt.estRenduEnRetard()).isTrue();
+    }
+
+    @Test
+    void estRenduEnRetard_empruntRenduALaDatePrevue_retourneFaux() {
+        Emprunt emprunt = new Emprunt();
+        emprunt.setDateEmprunt(LocalDate.now().minusDays(30));
+        emprunt.setDateRetourPrevue(LocalDate.now().minusDays(1));
+        emprunt.setDateRetour(LocalDate.now().minusDays(1));
+
+        assertThat(emprunt.estRenduEnRetard()).isFalse();
+    }
+
+    @Test
+    void estRenduEnRetard_empruntRenduAvantDatePrevue_retourneFaux() {
+        Emprunt emprunt = new Emprunt();
+        emprunt.setDateEmprunt(LocalDate.now().minusDays(30));
+        emprunt.setDateRetourPrevue(LocalDate.now().plusDays(5));
+        emprunt.setDateRetour(LocalDate.now());
+
+        assertThat(emprunt.estRenduEnRetard()).isFalse();
+    }
+
+    @Test
+    void estRenduEnRetard_empruntActif_retourneFaux() {
+        Emprunt emprunt = new Emprunt();
+        emprunt.setDateEmprunt(LocalDate.now().minusDays(30));
+        emprunt.setDateRetourPrevue(LocalDate.now().minusDays(5));
+
+        assertThat(emprunt.estRenduEnRetard()).isFalse();
+    }
+
+    @Test
+    void estRenduEnRetard_sansDatePrevue_retourneFaux() {
+        Emprunt emprunt = new Emprunt();
+        emprunt.setDateEmprunt(LocalDate.now().minusDays(30));
+        emprunt.setDateRetour(LocalDate.now());
+
+        assertThat(emprunt.estRenduEnRetard()).isFalse();
     }
 
     @Test

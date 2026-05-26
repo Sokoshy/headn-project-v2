@@ -104,8 +104,13 @@ public class Emprunt {
     }
 
     public boolean estEnRetard() {
-        if (dateRetour != null) return false;
-        return dateEmprunt.plusDays(30).isBefore(LocalDate.now());
+        if (dateRetour != null || dateRetourPrevue == null) return false;
+        return dateRetourPrevue.isBefore(LocalDate.now());
+    }
+
+    public boolean estRenduEnRetard() {
+        if (dateRetour == null || dateRetourPrevue == null) return false;
+        return dateRetour.isAfter(dateRetourPrevue);
     }
 
     public long getNombreJoursEmprunt() {
