@@ -302,3 +302,6 @@ The Spring Boot Maven Plugin packages a fat JAR. No external container needed.
 8. **Before adding a new dependency to `pom.xml`**, check if the Spring Boot starter for it already covers the need.
 9. **Flyway migrations must be backward-compatible** with existing data in any environment.
 10. **Test your changes** — run `mise run test` or at least the relevant test class.
+11. **Always notify before spawning a fork** — tell the user what the fork will do and why before launching it.
+12. **Communication language:** discuss in French with the user. All output files (code, docs, comments, commit messages) must be in English.
+13. **Atomic commits only** — one logical change per commit. Do not bundle unrelated changes together.
