@@ -55,4 +55,6 @@ public interface EmpruntRepository extends JpaRepository<Emprunt, Long> {
 
     @Query("SELECT COUNT(e) FROM Emprunt e WHERE e.dateRetour IS NULL AND e.dateEmprunt < :date")
     long countEmpruntsEnRetard(@Param("date") LocalDate date);
+
+    long countByDateRetourIsNullAndDateRetourPrevueBefore(LocalDate date);
 }
