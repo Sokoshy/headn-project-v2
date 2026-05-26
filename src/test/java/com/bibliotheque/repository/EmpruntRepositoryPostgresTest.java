@@ -36,14 +36,14 @@ class EmpruntRepositoryPostgresTest extends PostgresIntegrationTestBase {
     }
 
     @Test
-    void dateRetourPrevue_isNullByDefault() {
+    void dateRetourPrevue_isRequiredByDatabase() {
         Livre livre = livreRepository.save(new Livre("Dune", "Frank Herbert"));
         Utilisateur alice = utilisateurRepository.save(new Utilisateur("Alice", "alice-default@example.com"));
 
         Emprunt emprunt = new Emprunt(alice, livre);
-        Emprunt saved = empruntRepository.saveAndFlush(emprunt);
-
-        assertThat(saved.getDateRetourPrevue()).isNull();
+        // Without dateRetourPrevue, the NOT NULL constraint rejects the insert
+        assertThatThrownBy(() -> empruntRepository.saveAndFlush(emprunt))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
     }
 
     @Test
@@ -60,15 +60,21 @@ class EmpruntRepositoryPostgresTest extends PostgresIntegrationTestBase {
         assertThat(loaded.getDateRetourPrevue()).isEqualTo(expected);
     }
 
+    private Emprunt createEmprunt(Utilisateur u, Livre l) {
+        Emprunt e = new Emprunt(u, l);
+        e.setDateRetourPrevue(LocalDate.now().plusDays(30));
+        return e;
+    }
+
     @Test
     void partialUniqueIndexBlocksSecondActiveLoanForSameBook() {
         Livre livre = livreRepository.save(new Livre("Dune", "Frank Herbert"));
         Utilisateur alice = utilisateurRepository.save(new Utilisateur("Alice", "alice-index@example.com"));
         Utilisateur bob = utilisateurRepository.save(new Utilisateur("Bob", "bob-index@example.com"));
 
-        empruntRepository.saveAndFlush(new Emprunt(alice, livre));
+        empruntRepository.saveAndFlush(createEmprunt(alice, livre));
 
-        Emprunt secondEmprunt = new Emprunt(bob, livre);
+        Emprunt secondEmprunt = createEmprunt(bob, livre);
 
         assertThatThrownBy(() -> empruntRepository.saveAndFlush(secondEmprunt))
                 .isInstanceOf(DataIntegrityViolationException.class)
@@ -81,11 +87,11 @@ class EmpruntRepositoryPostgresTest extends PostgresIntegrationTestBase {
         Utilisateur alice = utilisateurRepository.save(new Utilisateur("Alice", "alice-history@example.com"));
         Utilisateur bob = utilisateurRepository.save(new Utilisateur("Bob", "bob-history@example.com"));
 
-        Emprunt historique = new Emprunt(alice, livre);
+        Emprunt historique = createEmprunt(alice, livre);
         historique.setDateRetour(LocalDate.now());
         empruntRepository.saveAndFlush(historique);
 
-        Emprunt actif = empruntRepository.saveAndFlush(new Emprunt(bob, livre));
+        Emprunt actif = empruntRepository.saveAndFlush(createEmprunt(bob, livre));
 
         assertThat(actif.getId()).isNotNull();
         assertThat(empruntRepository.count()).isEqualTo(2);

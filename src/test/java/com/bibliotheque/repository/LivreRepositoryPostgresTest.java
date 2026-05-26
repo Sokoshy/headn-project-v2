@@ -95,7 +95,9 @@ class LivreRepositoryPostgresTest extends PostgresIntegrationTestBase {
         Utilisateur utilisateur = utilisateurRepository.save(new Utilisateur("Alice", "alice-livre-repository@example.com"));
         Livre livre = livreRepository.save(new Livre("Dune", "Frank Herbert"));
 
-        empruntRepository.save(new Emprunt(utilisateur, livre));
+        Emprunt emprunt = new Emprunt(utilisateur, livre);
+        emprunt.setDateRetourPrevue(java.time.LocalDate.now().plusDays(30));
+        empruntRepository.save(emprunt);
 
         Livre retrouve = livreRepository.findById(livre.getId()).orElseThrow();
         assertThat(retrouve.isDisponible()).isFalse();
