@@ -48,7 +48,6 @@ public class LivreService {
     public Livre creer(Livre livre) {
         normaliserLivre(livre);
         validerUniciteTitreAuteur(livre.getTitre(), livre.getAuteur(), null);
-        livre.setDisponible(true);
         return livreRepository.save(livre);
     }
 
@@ -78,20 +77,6 @@ public class LivreService {
     public boolean estDisponible(Long id) {
         findById(id);
         return !empruntRepository.existsByLivreIdAndDateRetourIsNull(id);
-    }
-
-    @Transactional
-    public void marquerIndisponible(Long id) {
-        Livre livre = findById(id);
-        livre.setDisponible(false);
-        livreRepository.save(livre);
-    }
-
-    @Transactional
-    public void marquerDisponible(Long id) {
-        Livre livre = findById(id);
-        livre.setDisponible(true);
-        livreRepository.save(livre);
     }
 
     public long countDisponibles() {

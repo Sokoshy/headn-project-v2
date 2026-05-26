@@ -9,6 +9,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import org.hibernate.annotations.Formula;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -31,8 +32,8 @@ public class Livre {
     @Column(nullable = false)
     private String auteur;
 
-    @Column(nullable = false)
-    private boolean disponible = true;
+    @Formula("(SELECT NOT EXISTS (SELECT 1 FROM emprunts e WHERE e.livre_id = id AND e.date_retour IS NULL))")
+    private boolean disponible;
 
     @Column(name = "date_creation", updatable = false)
     private LocalDateTime dateCreation;
@@ -43,7 +44,6 @@ public class Livre {
     public Livre(String titre, String auteur) {
         this.titre = titre;
         this.auteur = auteur;
-        this.disponible = true;
     }
 
     @PrePersist
@@ -79,10 +79,6 @@ public class Livre {
 
     public boolean isDisponible() {
         return disponible;
-    }
-
-    public void setDisponible(boolean disponible) {
-        this.disponible = disponible;
     }
 
     public LocalDateTime getDateCreation() {

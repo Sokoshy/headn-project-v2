@@ -39,6 +39,9 @@ public class Emprunt {
     @Column(name = "date_retour")
     private LocalDate dateRetour;
 
+    @Column(name = "date_retour_prevue")
+    private LocalDate dateRetourPrevue;
+
     public Emprunt() {
     }
 
@@ -86,6 +89,14 @@ public class Emprunt {
 
     public void setDateRetour(LocalDate dateRetour) {
         this.dateRetour = dateRetour;
+    }
+
+    public LocalDate getDateRetourPrevue() {
+        return dateRetourPrevue;
+    }
+
+    public void setDateRetourPrevue(LocalDate dateRetourPrevue) {
+        this.dateRetourPrevue = dateRetourPrevue;
     }
 
     public boolean estEnCours() {
