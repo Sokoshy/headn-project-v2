@@ -156,7 +156,7 @@ class EmpruntServiceTest {
         emprunt.setDateEmprunt(LocalDate.now().minusDays(10));
         emprunt.setDateRetour(LocalDate.now().minusDays(1));
 
-        when(empruntRepository.findById(4L)).thenReturn(Optional.of(emprunt));
+        when(empruntRepository.findByIdWithDetails(4L)).thenReturn(Optional.of(emprunt));
 
         assertThatThrownBy(() -> empruntService.effectuerRetour(4L))
                 .isInstanceOf(EmpruntDejaRetourneException.class);
@@ -171,7 +171,7 @@ class EmpruntServiceTest {
         emprunt.setLivre(livre);
         emprunt.setDateEmprunt(LocalDate.now().minusDays(10));
 
-        when(empruntRepository.findById(4L)).thenReturn(Optional.of(emprunt));
+        when(empruntRepository.findByIdWithDetails(4L)).thenReturn(Optional.of(emprunt));
         when(empruntRepository.save(any(Emprunt.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -191,7 +191,7 @@ class EmpruntServiceTest {
 
         LocalDate nouvelleDate = LocalDate.now().plusDays(45);
 
-        when(empruntRepository.findById(1L)).thenReturn(Optional.of(emprunt));
+        when(empruntRepository.findByIdWithDetails(1L)).thenReturn(Optional.of(emprunt));
         when(empruntRepository.save(any(Emprunt.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -208,7 +208,7 @@ class EmpruntServiceTest {
         emprunt.setDateRetour(LocalDate.now().minusDays(30));
         emprunt.setDateRetourPrevue(LocalDate.now().minusDays(30));
 
-        when(empruntRepository.findById(1L)).thenReturn(Optional.of(emprunt));
+        when(empruntRepository.findByIdWithDetails(1L)).thenReturn(Optional.of(emprunt));
 
         assertThatThrownBy(() -> empruntService.corrigerDateRetourPrevue(1L, LocalDate.now().plusDays(30)))
                 .isInstanceOf(EmpruntDejaRetourneException.class);
@@ -233,7 +233,7 @@ class EmpruntServiceTest {
         emprunt.setDateEmprunt(LocalDate.now().minusDays(10));
         emprunt.setDateRetourPrevue(LocalDate.now().plusDays(20));
 
-        when(empruntRepository.findById(1L)).thenReturn(Optional.of(emprunt));
+        when(empruntRepository.findByIdWithDetails(1L)).thenReturn(Optional.of(emprunt));
         when(empruntRepository.save(any(Emprunt.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -251,7 +251,7 @@ class EmpruntServiceTest {
         emprunt.setLivre(livre);
         emprunt.setDateEmprunt(LocalDate.now().minusDays(10));
 
-        when(empruntRepository.findById(4L)).thenReturn(Optional.of(emprunt));
+        when(empruntRepository.findByIdWithDetails(4L)).thenReturn(Optional.of(emprunt));
         when(empruntRepository.save(any(Emprunt.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 

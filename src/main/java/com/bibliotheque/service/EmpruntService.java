@@ -105,7 +105,8 @@ public class EmpruntService {
             throw new com.bibliotheque.exception.DateRetourPrevueDansLePasseException();
         }
 
-        Emprunt emprunt = findById(empruntId);
+        Emprunt emprunt = empruntRepository.findByIdWithDetails(empruntId)
+                .orElseThrow(() -> new EmpruntNotFoundException(empruntId));
 
         if (!emprunt.estEnCours()) {
             throw new EmpruntDejaRetourneException(empruntId);
@@ -117,14 +118,14 @@ public class EmpruntService {
 
     @Transactional
     public Emprunt effectuerRetour(Long empruntId) {
-        Emprunt emprunt = findById(empruntId);
+        Emprunt emprunt = empruntRepository.findByIdWithDetails(empruntId)
+                .orElseThrow(() -> new EmpruntNotFoundException(empruntId));
 
         if (!emprunt.estEnCours()) {
             throw new EmpruntDejaRetourneException(empruntId);
         }
 
         emprunt.setDateRetour(LocalDate.now());
-
         return empruntRepository.save(emprunt);
     }
 
