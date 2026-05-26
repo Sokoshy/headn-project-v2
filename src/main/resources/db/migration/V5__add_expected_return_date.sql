@@ -1,0 +1,1 @@
+ALTER TABLE emprunts ADD COLUMN date_retour_prevue DATE;
