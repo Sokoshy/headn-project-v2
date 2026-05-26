@@ -3,38 +3,44 @@ package com.bibliotheque.web;
 import com.bibliotheque.exception.BusinessException;
 import com.bibliotheque.model.Emprunt;
 import com.bibliotheque.service.EmpruntService;
-import com.bibliotheque.service.LivreService;
-import com.bibliotheque.service.UtilisateurService;
+import com.bibliotheque.service.LoanActivityService;
+import com.bibliotheque.service.LoanPreparationService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.time.LocalDate;
 
 @Controller
 public class EmpruntController {
 
     private final EmpruntService empruntService;
-    private final LivreService livreService;
-    private final UtilisateurService utilisateurService;
+    private final LoanActivityService loanActivityService;
+    private final LoanPreparationService loanPreparationService;
 
     public EmpruntController(EmpruntService empruntService,
-                              LivreService livreService,
-                              UtilisateurService utilisateurService) {
+                              LoanActivityService loanActivityService,
+                              LoanPreparationService loanPreparationService) {
         this.empruntService = empruntService;
-        this.livreService = livreService;
-        this.utilisateurService = utilisateurService;
+        this.loanActivityService = loanActivityService;
+        this.loanPreparationService = loanPreparationService;
     }
 
     @GetMapping("/emprunts")
-    public String liste(Model model) {
-        model.addAttribute("empruntsActifs", empruntService.findActifs());
-        model.addAttribute("historique", empruntService.findHistorique());
-        model.addAttribute("empruntsEnRetard", empruntService.findEnRetard());
-        model.addAttribute("livresDisponibles", livreService.findDisponibles());
-        model.addAttribute("utilisateurs", utilisateurService.findAll());
+    public String liste(@RequestParam(required = false) String searchUser,
+                        @RequestParam(required = false) String searchBook,
+                        @RequestParam(defaultValue = "0") int page,
+                        Model model) {
+        model.addAttribute("loanActivity",
+                loanActivityService.getLoanActivity(searchUser, searchBook, page));
+        model.addAttribute("loanPreparation", loanPreparationService.getPreparation());
+        model.addAttribute("searchUser", searchUser);
+        model.addAttribute("searchBook", searchBook);
         return "emprunts/liste";
     }
 
@@ -47,9 +53,10 @@ public class EmpruntController {
     @PostMapping("/emprunts")
     public String creer(@ModelAttribute("utilisateurId") Long utilisateurId,
                         @ModelAttribute("livreId") Long livreId,
+                        @RequestParam(value = "dateRetourPrevue", required = false) LocalDate dateRetourPrevue,
                         RedirectAttributes redirectAttributes) {
         try {
-            Emprunt emprunt = empruntService.creer(utilisateurId, livreId);
+            Emprunt emprunt = empruntService.creer(utilisateurId, livreId, dateRetourPrevue);
             redirectAttributes.addFlashAttribute("success",
                     "Emprunt enregistré : \"" + emprunt.getLivre().getTitre() +
                     "\" par " + emprunt.getUtilisateur().getNom());

@@ -56,6 +56,10 @@
                         <dd th:text="${#temporals.format(emprunt.dateEmprunt, 'dd MMMM yyyy')}">01 janvier 2024</dd>
                     </div>
                     <div class="detail-item">
+                        <dt>Date de retour prévue</dt>
+                        <dd th:text="${emprunt.dateRetourPrevue != null ? #temporals.format(emprunt.dateRetourPrevue, 'dd MMMM yyyy') : 'Non définie'}">Non définie</dd>
+                    </div>
+                    <div class="detail-item">
                         <dt>Date de retour</dt>
                         <dd th:text="${emprunt.dateRetour != null ? #temporals.format(emprunt.dateRetour, 'dd MMMM yyyy') : 'En cours'}" class="return-date-value">
                             En cours
