@@ -51,7 +51,6 @@ class LivreServiceTest {
 
         assertThat(resultat.getTitre()).isEqualTo("Dune");
         assertThat(resultat.getAuteur()).isEqualTo("Frank Herbert");
-        assertThat(resultat.isDisponible()).isTrue();
     }
 
     @Test
@@ -109,10 +108,9 @@ class LivreServiceTest {
     }
 
     @Test
-    void supprimer_rejectsBookWithLoanHistoryEvenIfDisponibleFlagIsTrue() {
+    void supprimer_rejectsBookWithLoanHistory() {
         Livre livre = new Livre("Dune", "Frank Herbert");
         livre.setId(1L);
-        livre.setDisponible(true);
 
         when(livreRepository.findById(1L)).thenReturn(Optional.of(livre));
         when(empruntRepository.existsByLivre(livre)).thenReturn(true);
@@ -139,10 +137,9 @@ class LivreServiceTest {
     }
 
     @Test
-    void estDisponible_usesActiveLoanStateInsteadOfDisponibleFlag() {
+    void estDisponible_usesActiveLoanState() {
         Livre livre = new Livre("Dune", "Frank Herbert");
         livre.setId(1L);
-        livre.setDisponible(true);
 
         when(livreRepository.findById(1L)).thenReturn(Optional.of(livre));
         when(empruntRepository.existsByLivreIdAndDateRetourIsNull(1L)).thenReturn(true);

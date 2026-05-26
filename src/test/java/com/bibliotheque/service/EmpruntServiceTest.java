@@ -46,7 +46,25 @@ class EmpruntServiceTest {
     }
 
     @Test
-    void creer_usesLockedBookAndMarksItUnavailable() {
+    void creer_setsDateRetourPrevue() {
+        Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
+        Livre livre = new Livre("Dune", "Frank Herbert");
+        livre.setId(2L);
+        LocalDate datePrevue = LocalDate.now().plusDays(30);
+
+        when(utilisateurService.findById(1L)).thenReturn(utilisateur);
+        when(livreRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(livre));
+        when(empruntRepository.existsByLivreAndDateRetourIsNull(livre)).thenReturn(false);
+        when(empruntRepository.saveAndFlush(any(Emprunt.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Emprunt resultat = empruntService.creer(1L, 2L, datePrevue);
+
+        assertThat(resultat.getDateRetourPrevue()).isEqualTo(datePrevue);
+    }
+
+    @Test
+    void creer_usesLockedBook() {
         Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
         Livre livre = new Livre("Dune", "Frank Herbert");
         livre.setId(2L);
@@ -57,11 +75,10 @@ class EmpruntServiceTest {
         when(empruntRepository.saveAndFlush(any(Emprunt.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        Emprunt resultat = empruntService.creer(1L, 2L);
+        Emprunt resultat = empruntService.creer(1L, 2L, null);
 
         assertThat(resultat.getLivre()).isSameAs(livre);
         assertThat(resultat.getUtilisateur()).isSameAs(utilisateur);
-        assertThat(livre.isDisponible()).isFalse();
         verify(livreRepository).findByIdForUpdate(2L);
     }
 
@@ -70,13 +87,12 @@ class EmpruntServiceTest {
         Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
         Livre livre = new Livre("Dune", "Frank Herbert");
         livre.setId(2L);
-        livre.setDisponible(true);
 
         when(utilisateurService.findById(1L)).thenReturn(utilisateur);
         when(livreRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(livre));
         when(empruntRepository.existsByLivreAndDateRetourIsNull(livre)).thenReturn(true);
 
-        assertThatThrownBy(() -> empruntService.creer(1L, 2L))
+        assertThatThrownBy(() -> empruntService.creer(1L, 2L, null))
                 .isInstanceOf(LivreNonDisponibleException.class)
                 .hasMessageContaining("Dune");
     }
@@ -93,7 +109,7 @@ class EmpruntServiceTest {
         when(empruntRepository.saveAndFlush(any(Emprunt.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate active loan"));
 
-        assertThatThrownBy(() -> empruntService.creer(1L, 2L))
+        assertThatThrownBy(() -> empruntService.creer(1L, 2L, null))
                 .isInstanceOf(LivreNonDisponibleException.class)
                 .hasMessageContaining("Dune");
     }
@@ -112,9 +128,8 @@ class EmpruntServiceTest {
     }
 
     @Test
-    void effectuerRetour_marksBookAvailableWhenNoOtherActiveLoanExists() {
+    void effectuerRetour_setsReturnDate() {
         Livre livre = new Livre("Dune", "Frank Herbert");
-        livre.setDisponible(false);
 
         Emprunt emprunt = new Emprunt();
         emprunt.setId(4L);
@@ -122,20 +137,17 @@ class EmpruntServiceTest {
         emprunt.setDateEmprunt(LocalDate.now().minusDays(10));
 
         when(empruntRepository.findById(4L)).thenReturn(Optional.of(emprunt));
-        when(empruntRepository.existsByLivreAndDateRetourIsNull(livre)).thenReturn(false);
         when(empruntRepository.save(any(Emprunt.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         Emprunt resultat = empruntService.effectuerRetour(4L);
 
         assertThat(resultat.getDateRetour()).isEqualTo(LocalDate.now());
-        assertThat(livre.isDisponible()).isTrue();
     }
 
     @Test
-    void effectuerRetour_keepsBookUnavailableWhenAnotherActiveLoanExists() {
+    void effectuerRetour_savesReturnedLoanWithoutMutatingBook() {
         Livre livre = new Livre("Dune", "Frank Herbert");
-        livre.setDisponible(false);
 
         Emprunt emprunt = new Emprunt();
         emprunt.setId(4L);
@@ -143,12 +155,11 @@ class EmpruntServiceTest {
         emprunt.setDateEmprunt(LocalDate.now().minusDays(10));
 
         when(empruntRepository.findById(4L)).thenReturn(Optional.of(emprunt));
-        when(empruntRepository.existsByLivreAndDateRetourIsNull(livre)).thenReturn(true);
         when(empruntRepository.save(any(Emprunt.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        empruntService.effectuerRetour(4L);
+        Emprunt resultat = empruntService.effectuerRetour(4L);
 
-        assertThat(livre.isDisponible()).isFalse();
+        assertThat(resultat.getDateRetour()).isEqualTo(LocalDate.now());
     }
 }

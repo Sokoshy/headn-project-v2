@@ -1,6 +1,6 @@
 package com.bibliotheque.web;
 
-import com.bibliotheque.service.EmpruntService;
+import com.bibliotheque.service.LoanActivityService;
 import com.bibliotheque.service.LivreService;
 import com.bibliotheque.service.UtilisateurService;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,13 +27,13 @@ class HomeControllerTest {
     private UtilisateurService utilisateurService;
 
     @Mock
-    private EmpruntService empruntService;
+    private LoanActivityService loanActivityService;
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        HomeController controller = new HomeController(livreService, utilisateurService, empruntService);
+        HomeController controller = new HomeController(livreService, utilisateurService, loanActivityService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
@@ -42,8 +42,8 @@ class HomeControllerTest {
         when(livreService.countTotal()).thenReturn(42L);
         when(livreService.countDisponibles()).thenReturn(30L);
         when(utilisateurService.countTotal()).thenReturn(15L);
-        when(empruntService.countActifs()).thenReturn(12L);
-        when(empruntService.countEnRetard()).thenReturn(3L);
+        when(loanActivityService.countActiveLoans()).thenReturn(12L);
+        when(loanActivityService.countOverdueLoans()).thenReturn(3L);
 
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())

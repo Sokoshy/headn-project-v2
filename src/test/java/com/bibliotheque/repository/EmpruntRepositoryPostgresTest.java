@@ -36,6 +36,31 @@ class EmpruntRepositoryPostgresTest extends PostgresIntegrationTestBase {
     }
 
     @Test
+    void dateRetourPrevue_isNullByDefault() {
+        Livre livre = livreRepository.save(new Livre("Dune", "Frank Herbert"));
+        Utilisateur alice = utilisateurRepository.save(new Utilisateur("Alice", "alice-default@example.com"));
+
+        Emprunt emprunt = new Emprunt(alice, livre);
+        Emprunt saved = empruntRepository.saveAndFlush(emprunt);
+
+        assertThat(saved.getDateRetourPrevue()).isNull();
+    }
+
+    @Test
+    void dateRetourPrevue_canBeSetAndRead() {
+        Livre livre = livreRepository.save(new Livre("Foundation", "Isaac Asimov"));
+        Utilisateur alice = utilisateurRepository.save(new Utilisateur("Alice", "alice-expected@example.com"));
+
+        Emprunt emprunt = new Emprunt(alice, livre);
+        LocalDate expected = LocalDate.now().plusDays(30);
+        emprunt.setDateRetourPrevue(expected);
+        Emprunt saved = empruntRepository.saveAndFlush(emprunt);
+
+        Emprunt loaded = empruntRepository.findById(saved.getId()).orElseThrow();
+        assertThat(loaded.getDateRetourPrevue()).isEqualTo(expected);
+    }
+
+    @Test
     void partialUniqueIndexBlocksSecondActiveLoanForSameBook() {
         Livre livre = livreRepository.save(new Livre("Dune", "Frank Herbert"));
         Utilisateur alice = utilisateurRepository.save(new Utilisateur("Alice", "alice-index@example.com"));

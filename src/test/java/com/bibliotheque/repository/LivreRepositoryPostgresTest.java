@@ -1,7 +1,9 @@
 package com.bibliotheque.repository;
 
 import com.bibliotheque.BibliothequeApplication;
+import com.bibliotheque.model.Emprunt;
 import com.bibliotheque.model.Livre;
+import com.bibliotheque.model.Utilisateur;
 import com.bibliotheque.support.PostgresIntegrationTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,9 +24,13 @@ class LivreRepositoryPostgresTest extends PostgresIntegrationTestBase {
     @Autowired
     private EmpruntRepository empruntRepository;
 
+    @Autowired
+    private UtilisateurRepository utilisateurRepository;
+
     @BeforeEach
     void cleanDatabase() {
         empruntRepository.deleteAllInBatch();
+        utilisateurRepository.deleteAllInBatch();
         livreRepository.deleteAllInBatch();
     }
 
@@ -78,12 +84,21 @@ class LivreRepositoryPostgresTest extends PostgresIntegrationTestBase {
     @Test
     void findDisponibles_retourneSeulementLesLivresSansEmpruntActif() {
         Livre disponible = livreRepository.save(new Livre("Dune", "Frank Herbert"));
-        disponible.setDisponible(true);
-        livreRepository.save(disponible);
 
         List<Livre> disponibles = livreRepository.findDisponibles();
 
         assertThat(disponibles).extracting(Livre::getId).contains(disponible.getId());
+    }
+
+    @Test
+    void findById_calculeLaDisponibiliteDepuisLesEmpruntsActifs() {
+        Utilisateur utilisateur = utilisateurRepository.save(new Utilisateur("Alice", "alice-livre-repository@example.com"));
+        Livre livre = livreRepository.save(new Livre("Dune", "Frank Herbert"));
+
+        empruntRepository.save(new Emprunt(utilisateur, livre));
+
+        Livre retrouve = livreRepository.findById(livre.getId()).orElseThrow();
+        assertThat(retrouve.isDisponible()).isFalse();
     }
 
     @Test

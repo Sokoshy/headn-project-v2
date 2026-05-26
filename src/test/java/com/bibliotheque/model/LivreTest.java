@@ -28,14 +28,6 @@ class LivreTest {
 
         assertThat(livre.getTitre()).isEqualTo("Dune");
         assertThat(livre.getAuteur()).isEqualTo("Frank Herbert");
-        assertThat(livre.isDisponible()).isTrue();
-    }
-
-    @Test
-    void constructeurParDefaut_creeUnLivreDisponible() {
-        Livre livre = new Livre();
-
-        assertThat(livre.isDisponible()).isTrue();
     }
 
     @Test

@@ -99,6 +99,23 @@ class EmpruntTest {
     }
 
     @Test
+    void dateRetourPrevue_peutEtreDefinieEtRecuperee() {
+        Emprunt emprunt = new Emprunt();
+        LocalDate datePrevue = LocalDate.now().plusDays(30);
+
+        emprunt.setDateRetourPrevue(datePrevue);
+
+        assertThat(emprunt.getDateRetourPrevue()).isEqualTo(datePrevue);
+    }
+
+    @Test
+    void dateRetourPrevue_estNullParDefaut() {
+        Emprunt emprunt = new Emprunt();
+
+        assertThat(emprunt.getDateRetourPrevue()).isNull();
+    }
+
+    @Test
     void equals_deuxEmpruntsAvecIdDifferent_sontDifferents() {
         Emprunt e1 = new Emprunt();
         e1.setId(1L);

@@ -44,7 +44,7 @@ class EmpruntServicePostgresTest extends PostgresIntegrationTestBase {
         Utilisateur utilisateur = utilisateurRepository.save(new Utilisateur("Alice", "alice-service@example.com"));
         Livre livre = livreRepository.save(new Livre("Dune", "Frank Herbert"));
 
-        Emprunt emprunt = empruntService.creer(utilisateur.getId(), livre.getId());
+        Emprunt emprunt = empruntService.creer(utilisateur.getId(), livre.getId(), null);
 
         Livre livreApresCreation = livreRepository.findById(livre.getId()).orElseThrow();
         assertThat(emprunt.getId()).isNotNull();
@@ -52,7 +52,7 @@ class EmpruntServicePostgresTest extends PostgresIntegrationTestBase {
         assertThat(livreRepository.findDisponibles()).isEmpty();
         assertThat(empruntRepository.countByDateRetourIsNull()).isEqualTo(1);
 
-        assertThatThrownBy(() -> empruntService.creer(utilisateur.getId(), livre.getId()))
+        assertThatThrownBy(() -> empruntService.creer(utilisateur.getId(), livre.getId(), null))
                 .isInstanceOf(LivreNonDisponibleException.class);
 
         empruntService.effectuerRetour(emprunt.getId());
