@@ -576,6 +576,42 @@ textarea:focus-visible,
     color: var(--color-gray-600);
 }
 
+/* Status filter tabs */
+
+.status-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+    padding: var(--space-2) 0;
+}
+
+.status-filter {
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-600);
+    background-color: var(--color-gray-100);
+    text-decoration: none;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.status-filter:hover {
+    background-color: var(--color-gray-200);
+    color: var(--color-gray-800);
+}
+
+.status-filter-active {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.status-filter-active:hover {
+    background-color: var(--color-primary-dark);
+    color: white;
+}
+
 /* --------------------------------------------------------------------------
    Alerts
    -------------------------------------------------------------------------- */
