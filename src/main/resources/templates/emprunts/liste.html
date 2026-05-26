@@ -65,6 +65,25 @@
                 <span class="section-count" th:text="${loanActivity.activeLoans.size()} + ' emprunt(s)'">0 emprunt(s)</span>
             </div>
 
+            <!-- Status filter tabs -->
+            <div class="status-filters">
+                <a th:href="@{/emprunts(statut='tous', searchUser=${searchUser}, searchBook=${searchBook})}"
+                   class="status-filter"
+                   th:classappend="${statut == 'tous'} ? 'status-filter-active'">Tous</a>
+                <a th:href="@{/emprunts(statut='actifs', searchUser=${searchUser}, searchBook=${searchBook})}"
+                   class="status-filter"
+                   th:classappend="${statut == 'actifs'} ? 'status-filter-active'">Actifs</a>
+                <a th:href="@{/emprunts(statut='en_retard', searchUser=${searchUser}, searchBook=${searchBook})}"
+                   class="status-filter"
+                   th:classappend="${statut == 'en_retard'} ? 'status-filter-active'">En retard</a>
+                <a th:href="@{/emprunts(statut='termines', searchUser=${searchUser}, searchBook=${searchBook})}"
+                   class="status-filter"
+                   th:classappend="${statut == 'termines'} ? 'status-filter-active'">Terminés</a>
+                <a th:href="@{/emprunts(statut='rendus_en_retard', searchUser=${searchUser}, searchBook=${searchBook})}"
+                   class="status-filter"
+                   th:classappend="${statut == 'rendus_en_retard'} ? 'status-filter-active'">Rendus en retard</a>
+            </div>
+
             <div th:if="${loanActivity.activeLoans.isEmpty()}" class="empty-state">
                 <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -210,6 +229,7 @@
                             <th scope="col">Utilisateur</th>
                             <th scope="col">Date d'emprunt</th>
                             <th scope="col">Date de retour</th>
+                            <th scope="col">Statut</th>
                             <th scope="col">Actions</th>
                         </tr>
                     </thead>
@@ -232,6 +252,21 @@
                             <td th:text="${#temporals.format(hist.borrowDate, 'dd MMM yyyy')}">01 jan. 2024</td>
                             <td th:text="${#temporals.format(hist.returnDate, 'dd MMM yyyy')}">15 jan. 2024</td>
                             <td>
+                                <span th:if="${hist.status.name() == 'LATE_RETURN'}" class="badge badge-warning">
+                                    <svg class="icon-2xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12,6 12,12 16,14"/>
+                                    </svg>
+                                    Rendu en retard
+                                </span>
+                                <span th:unless="${hist.status.name() == 'LATE_RETURN'}" class="badge badge-neutral">
+                                    <svg class="icon-2xs icon-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <polyline points="20,6 9,17 4,12"/>
+                                    </svg>
+                                    Terminé
+                                </span>
+                            </td>
+                            <td>
                                 <a th:href="@{/emprunts/{id}(id=${hist.empruntId})}" class="btn btn-ghost btn-sm">Détail</a>
                             </td>
                         </tr>
@@ -247,7 +282,7 @@
                     Précédent
                 </span>
                 <a th:if="${loanActivity.page > 0}"
-                   th:href="@{/emprunts(searchUser=${searchUser},searchBook=${searchBook},page=${loanActivity.page - 1})}"
+                   th:href="@{/emprunts(searchUser=${searchUser},searchBook=${searchBook},statut=${statut},page=${loanActivity.page - 1})}"
                    class="pagination-link">
                     <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <polyline points="15,18 9,12 15,6"/>
@@ -267,7 +302,7 @@
                     </svg>
                 </span>
                 <a th:if="${loanActivity.page < loanActivity.totalPages - 1}"
-                   th:href="@{/emprunts(searchUser=${searchUser},searchBook=${searchBook},page=${loanActivity.page + 1})}"
+                   th:href="@{/emprunts(searchUser=${searchUser},searchBook=${searchBook},statut=${statut},page=${loanActivity.page + 1})}"
                    class="pagination-link">
                     Suivant
                     <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
