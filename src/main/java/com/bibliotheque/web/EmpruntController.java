@@ -32,10 +32,10 @@ public class EmpruntController {
     }
 
     @GetMapping("/emprunts")
-    public String liste(@RequestParam(required = false) String searchUser,
-                        @RequestParam(required = false) String searchBook,
-                        @RequestParam(defaultValue = "0") int page,
-                        @RequestParam(defaultValue = "tous") String statut,
+    public String liste(@RequestParam(value = "searchUser", required = false) String searchUser,
+                        @RequestParam(value = "searchBook", required = false) String searchBook,
+                        @RequestParam(value = "page", defaultValue = "0") int page,
+                        @RequestParam(value = "statut", defaultValue = "tous") String statut,
                         Model model) {
         model.addAttribute("loanActivity",
                 loanActivityService.getLoanActivity(searchUser, searchBook, page, statut));
@@ -47,7 +47,7 @@ public class EmpruntController {
     }
 
     @GetMapping("/emprunts/{id}")
-    public String voir(@PathVariable Long id, Model model) {
+    public String voir(@PathVariable("id") Long id, Model model) {
         model.addAttribute("emprunt", empruntService.findDetailById(id));
         return "emprunts/detail";
     }
@@ -70,7 +70,7 @@ public class EmpruntController {
     }
 
     @PostMapping("/emprunts/{id}/date-retour-prevue")
-    public String corrigerDateRetourPrevue(@PathVariable Long id,
+    public String corrigerDateRetourPrevue(@PathVariable("id") Long id,
                                             @RequestParam(value = "dateRetourPrevue", required = false) LocalDate dateRetourPrevue,
                                             RedirectAttributes redirectAttributes) {
         try {
@@ -85,7 +85,7 @@ public class EmpruntController {
     }
 
     @PostMapping("/emprunts/{id}/retour")
-    public String effectuerRetour(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String effectuerRetour(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
         try {
             Emprunt emprunt = empruntService.effectuerRetour(id);
             redirectAttributes.addFlashAttribute("success",
