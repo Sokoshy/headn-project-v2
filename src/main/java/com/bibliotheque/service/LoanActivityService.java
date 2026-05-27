@@ -98,6 +98,7 @@ public class LoanActivityService {
             case "en_retard" -> all.stream()
                     .filter(a -> a.status() == LoanStatus.OVERDUE)
                     .toList();
+            case "termines", "rendus_en_retard" -> List.of(); // History-only filters
             default -> all; // "tous" — show all active
         };
     }

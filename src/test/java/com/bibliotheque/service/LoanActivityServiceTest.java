@@ -223,6 +223,25 @@ class LoanActivityServiceTest {
     }
 
     @Test
+    @DisplayName("filter termines hides active loans even when repository returns them")
+    void getLoanActivity_filterTermines_hidesActiveLoans() {
+        // Active loans exist in the repository
+        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
+        Emprunt enRetard = createActiveEntry(2L, "Bob", "1984", 40);
+        enRetard.setDateRetourPrevue(LocalDate.now().minusDays(10));
+
+        when(empruntRepository.findActiveLoans()).thenReturn(List.of(actif, enRetard));
+        when(empruntRepository.findHistoryPaged(isNull(), isNull(), eq("termines"), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(empruntRepository.countHistoryFiltered(isNull(), isNull(), eq("termines"))).thenReturn(0L);
+
+        LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, "termines");
+
+        // Active loans must be hidden for "termines" filter
+        assertThat(activity.activeLoans()).isEmpty();
+    }
+
+    @Test
     @DisplayName("filter rendus_en_retard shows only late-returned history")
     void getLoanActivity_filterRendusEnRetard_showsOnlyLateReturned() {
         Emprunt renduEnRetard = createHistoryEntry(3L, "Charlie", "Fondation", 60, 30);
@@ -238,6 +257,25 @@ class LoanActivityServiceTest {
         assertThat(activity.activeLoans()).isEmpty();
         assertThat(activity.history()).hasSize(1);
         assertThat(activity.history().get(0).status()).isEqualTo(LoanStatus.LATE_RETURN);
+    }
+
+    @Test
+    @DisplayName("filter rendus_en_retard hides active loans even when repository returns them")
+    void getLoanActivity_filterRendusEnRetard_hidesActiveLoans() {
+        // Active loans exist in the repository
+        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
+        Emprunt enRetard = createActiveEntry(2L, "Bob", "1984", 40);
+        enRetard.setDateRetourPrevue(LocalDate.now().minusDays(10));
+
+        when(empruntRepository.findActiveLoans()).thenReturn(List.of(actif, enRetard));
+        when(empruntRepository.findHistoryPaged(isNull(), isNull(), eq("rendus_en_retard"), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(empruntRepository.countHistoryFiltered(isNull(), isNull(), eq("rendus_en_retard"))).thenReturn(0L);
+
+        LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, "rendus_en_retard");
+
+        // Active loans must be hidden for "rendus_en_retard" filter
+        assertThat(activity.activeLoans()).isEmpty();
     }
 
     @Test
