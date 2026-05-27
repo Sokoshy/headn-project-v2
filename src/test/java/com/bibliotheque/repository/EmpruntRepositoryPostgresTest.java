@@ -97,4 +97,106 @@ class EmpruntRepositoryPostgresTest extends PostgresIntegrationTestBase {
         assertThat(empruntRepository.count()).isEqualTo(2);
         assertThat(empruntRepository.countByDateRetourIsNull()).isEqualTo(1);
     }
+
+    // ---- Integration tests for new repository queries ----
+
+    @Test
+    void findActiveLoans_returnsOnlyUnreturnedLoans() {
+        Livre dune = livreRepository.save(new Livre("Dune", "Frank Herbert"));
+        Livre fondation = livreRepository.save(new Livre("Fondation", "Isaac Asimov"));
+        Utilisateur alice = utilisateurRepository.save(new Utilisateur("Alice", "alice-active@example.com"));
+
+        // Active loan
+        empruntRepository.saveAndFlush(createEmprunt(alice, dune));
+
+        // Returned loan
+        Emprunt returned = createEmprunt(alice, fondation);
+        returned.setDateRetour(LocalDate.now().minusDays(5));
+        empruntRepository.saveAndFlush(returned);
+
+        var active = empruntRepository.findActiveLoans();
+
+        assertThat(active).hasSize(1);
+        assertThat(active.get(0).getLivre().getTitre()).isEqualTo("Dune");
+    }
+
+    @Test
+    void findActiveLoansFiltered_filtersByUserName() {
+        Livre dune = livreRepository.save(new Livre("Dune", "Frank Herbert"));
+        Livre fondation = livreRepository.save(new Livre("Fondation", "Isaac Asimov"));
+        Livre neuromancien = livreRepository.save(new Livre("Neuromancien", "William Gibson"));
+        Utilisateur alice = utilisateurRepository.save(new Utilisateur("Alice", "alice-filter@example.com"));
+        Utilisateur bob = utilisateurRepository.save(new Utilisateur("Bob", "bob-filter@example.com"));
+
+        empruntRepository.saveAndFlush(createEmprunt(alice, dune));
+        empruntRepository.saveAndFlush(createEmprunt(bob, fondation));
+        empruntRepository.saveAndFlush(createEmprunt(alice, neuromancien));
+
+        var filtered = empruntRepository.findActiveLoansFiltered("%ali%", null);
+
+        assertThat(filtered).hasSize(2);
+        assertThat(filtered).allMatch(e -> e.getUtilisateur().getNom().contains("Ali"));
+    }
+
+    @Test
+    void findHistoryPaged_returnsPaginatedHistory() {
+        Livre livre = livreRepository.save(new Livre("Dune", "Frank Herbert"));
+        Utilisateur alice = utilisateurRepository.save(new Utilisateur("Alice", "alice-page@example.com"));
+
+        for (int i = 0; i < 25; i++) {
+            Livre l = livreRepository.save(new Livre("Book" + i, "Author" + i));
+            Emprunt e = createEmprunt(alice, l);
+            e.setDateRetour(LocalDate.now().minusDays(i));
+            empruntRepository.saveAndFlush(e);
+        }
+
+        var page1 = empruntRepository.findHistoryPaged(null, null, null,
+                org.springframework.data.domain.PageRequest.of(0, 10));
+
+        assertThat(page1.getContent()).hasSize(10);
+        assertThat(page1.getTotalElements()).isEqualTo(25);
+        assertThat(page1.getTotalPages()).isEqualTo(3);
+    }
+
+    @Test
+    void findHistoryPaged_appliesSearchFilter() {
+        Livre dune = livreRepository.save(new Livre("Dune", "Frank Herbert"));
+        Livre fondation = livreRepository.save(new Livre("Fondation", "Isaac Asimov"));
+        Utilisateur alice = utilisateurRepository.save(new Utilisateur("Alice", "alice-search@example.com"));
+
+        Emprunt e1 = createEmprunt(alice, dune);
+        e1.setDateRetour(LocalDate.now().minusDays(10));
+        empruntRepository.saveAndFlush(e1);
+
+        Emprunt e2 = createEmprunt(alice, fondation);
+        e2.setDateRetour(LocalDate.now().minusDays(5));
+        empruntRepository.saveAndFlush(e2);
+
+        var page = empruntRepository.findHistoryPaged(null, "%dun%", null,
+                org.springframework.data.domain.PageRequest.of(0, 10));
+
+        assertThat(page.getContent()).hasSize(1);
+        assertThat(page.getContent().get(0).getLivre().getTitre()).isEqualTo("Dune");
+    }
+
+    @Test
+    void countHistoryFiltered_matchesFindHistoryPaged() {
+        Livre dune = livreRepository.save(new Livre("Dune", "Frank Herbert"));
+        Livre fondation = livreRepository.save(new Livre("Fondation", "Isaac Asimov"));
+        Utilisateur alice = utilisateurRepository.save(new Utilisateur("Alice", "alice-count@example.com"));
+
+        Emprunt e1 = createEmprunt(alice, dune);
+        e1.setDateRetour(LocalDate.now().minusDays(10));
+        empruntRepository.saveAndFlush(e1);
+
+        Emprunt e2 = createEmprunt(alice, fondation);
+        e2.setDateRetour(LocalDate.now().minusDays(5));
+        empruntRepository.saveAndFlush(e2);
+
+        long count = empruntRepository.countHistoryFiltered(null, "%dun%", null);
+        var page = empruntRepository.findHistoryPaged(null, "%dun%", null,
+                org.springframework.data.domain.PageRequest.of(0, 10));
+
+        assertThat(count).isEqualTo(page.getTotalElements());
+    }
 }

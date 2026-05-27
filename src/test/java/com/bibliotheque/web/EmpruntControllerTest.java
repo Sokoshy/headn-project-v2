@@ -26,10 +26,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -78,7 +75,7 @@ class EmpruntControllerTest {
         SelectableUser user = new SelectableUser(1L, "Alice");
         LoanPreparation preparation = new LoanPreparation(List.of(book), List.of(user), LocalDate.now().plusDays(30));
 
-        when(loanActivityService.getLoanActivity(null, null, 0, "tous")).thenReturn(activity);
+        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(0), eq("tous"))).thenReturn(activity);
         when(loanPreparationService.getPreparation()).thenReturn(preparation);
 
         mockMvc.perform(get("/emprunts"))
@@ -92,7 +89,7 @@ class EmpruntControllerTest {
     void liste_passesSearchParamsToService() throws Exception {
         LoanActivity activity = new LoanActivity(List.of(), List.of(), 0, 1, 0L, true);
 
-        when(loanActivityService.getLoanActivity("Alice", "Dune", 0, "tous")).thenReturn(activity);
+        when(loanActivityService.getLoanActivity(eq("Alice"), eq("Dune"), eq(0), eq("tous"))).thenReturn(activity);
         when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
 
         mockMvc.perform(get("/emprunts")
@@ -107,7 +104,7 @@ class EmpruntControllerTest {
     void liste_passesPageParamToService() throws Exception {
         LoanActivity activity = new LoanActivity(List.of(), List.of(), 2, 3, 25L, false);
 
-        when(loanActivityService.getLoanActivity(null, null, 2, "tous")).thenReturn(activity);
+        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(2), eq("tous"))).thenReturn(activity);
         when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
 
         mockMvc.perform(get("/emprunts").param("page", "2"))
@@ -222,7 +219,7 @@ class EmpruntControllerTest {
     void liste_passesStatutParamToService() throws Exception {
         LoanActivity activity = new LoanActivity(List.of(), List.of(), 0, 1, 0L, false);
 
-        when(loanActivityService.getLoanActivity(null, null, 0, "en_retard")).thenReturn(activity);
+        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(0), eq("en_retard"))).thenReturn(activity);
         when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
 
         mockMvc.perform(get("/emprunts").param("statut", "en_retard"))
@@ -234,7 +231,7 @@ class EmpruntControllerTest {
     void liste_passesStatutDefaultTous() throws Exception {
         LoanActivity activity = new LoanActivity(List.of(), List.of(), 0, 1, 0L, false);
 
-        when(loanActivityService.getLoanActivity(null, null, 0, "tous")).thenReturn(activity);
+        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(0), eq("tous"))).thenReturn(activity);
         when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
 
         mockMvc.perform(get("/emprunts"))

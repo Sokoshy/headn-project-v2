@@ -9,16 +9,20 @@ import com.bibliotheque.model.activite.LoanHistory;
 import com.bibliotheque.model.activite.LoanStatus;
 import com.bibliotheque.repository.EmpruntRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,70 +38,71 @@ class LoanActivityServiceTest {
         loanActivityService = new LoanActivityService(empruntRepository);
     }
 
-    // ---- existing tests (adapted) ----
+    // ---- Active loans ----
 
     @Test
-    void getLoanActivity_separatesActiveLoansAndHistory() {
-        Livre livre1 = new Livre("Dune", "Frank Herbert");
-        livre1.setId(1L);
-        Livre livre2 = new Livre("1984", "George Orwell");
-        livre2.setId(2L);
-        Livre livre3 = new Livre("Fondation", "Isaac Asimov");
-        livre3.setId(3L);
+    @DisplayName("getLoanActivity returns active loans from repository")
+    void getLoanActivity_returnsActiveLoans() {
+        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
 
-        Utilisateur alice = new Utilisateur("Alice", "alice@example.com");
-        alice.setId(1L);
-        Utilisateur bob = new Utilisateur("Bob", "bob@example.com");
-        bob.setId(2L);
+        when(empruntRepository.findActiveLoans()).thenReturn(List.of(actif));
+        when(empruntRepository.findHistoryPaged(isNull(), isNull(), isNull(), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(empruntRepository.countHistoryFiltered(isNull(), isNull(), isNull())).thenReturn(0L);
 
-        Emprunt actif = new Emprunt(alice, livre1);
-        actif.setId(10L);
-        actif.setDateEmprunt(LocalDate.now().minusDays(5));
+        LoanActivity activity = loanActivityService.getLoanActivity();
 
-        Emprunt historique = new Emprunt(bob, livre2);
-        historique.setId(20L);
-        historique.setDateEmprunt(LocalDate.now().minusDays(60));
-        historique.setDateRetour(LocalDate.now().minusDays(40));
+        assertThat(activity.activeLoans()).hasSize(1);
+        assertThat(activity.activeLoans().get(0).bookTitle()).isEqualTo("Dune");
+        assertThat(activity.activeLoans().get(0).userName()).isEqualTo("Alice");
+        assertThat(activity.activeLoans().get(0).status()).isEqualTo(LoanStatus.ACTIVE);
+    }
 
-        Emprunt enRetard = new Emprunt(alice, livre3);
-        enRetard.setId(30L);
-        enRetard.setDateEmprunt(LocalDate.now().minusDays(40));
+    @Test
+    @DisplayName("getLoanActivity includes overdue active loans")
+    void getLoanActivity_includesOverdueActiveLoans() {
+        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
+        Emprunt enRetard = createActiveEntry(2L, "Bob", "1984", 40);
         enRetard.setDateRetourPrevue(LocalDate.now().minusDays(10));
 
-        when(empruntRepository.findAllWithDetails())
-                .thenReturn(List.of(actif, historique, enRetard));
+        when(empruntRepository.findActiveLoans()).thenReturn(List.of(actif, enRetard));
+        when(empruntRepository.findHistoryPaged(isNull(), isNull(), isNull(), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(empruntRepository.countHistoryFiltered(isNull(), isNull(), isNull())).thenReturn(0L);
 
         LoanActivity activity = loanActivityService.getLoanActivity();
 
         assertThat(activity.activeLoans()).hasSize(2);
+        assertThat(activity.activeLoans().get(0).status()).isEqualTo(LoanStatus.ACTIVE);
+        assertThat(activity.activeLoans().get(1).status()).isEqualTo(LoanStatus.OVERDUE);
+    }
+
+    @Test
+    @DisplayName("getLoanActivity returns history from repository with pagination")
+    void getLoanActivity_returnsHistoryPaged() {
+        Emprunt hist = createHistoryEntry(1L, "Bob", "1984", 60, 30);
+
+        when(empruntRepository.findActiveLoans()).thenReturn(List.of());
+        when(empruntRepository.findHistoryPaged(isNull(), isNull(), isNull(), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of(hist)));
+        when(empruntRepository.countHistoryFiltered(isNull(), isNull(), isNull())).thenReturn(1L);
+
+        LoanActivity activity = loanActivityService.getLoanActivity();
+
         assertThat(activity.history()).hasSize(1);
-
-        ActiveLoan premierActif = activity.activeLoans().get(0);
-        assertThat(premierActif.empruntId()).isEqualTo(10L);
-        assertThat(premierActif.bookTitle()).isEqualTo("Dune");
-        assertThat(premierActif.userName()).isEqualTo("Alice");
-        assertThat(premierActif.borrowDate()).isEqualTo(LocalDate.now().minusDays(5));
-        assertThat(premierActif.status()).isEqualTo(LoanStatus.ACTIVE);
-
-        ActiveLoan retarde = activity.activeLoans().get(1);
-        assertThat(retarde.empruntId()).isEqualTo(30L);
-        assertThat(retarde.status()).isEqualTo(LoanStatus.OVERDUE);
-
-        LoanHistory hist = activity.history().get(0);
-        assertThat(hist.empruntId()).isEqualTo(20L);
-        assertThat(hist.bookTitle()).isEqualTo("1984");
-        assertThat(hist.userName()).isEqualTo("Bob");
-        assertThat(hist.returnDate()).isEqualTo(LocalDate.now().minusDays(40));
-
-        assertThat(activity.page()).isEqualTo(0);
-        assertThat(activity.totalPages()).isEqualTo(1);
+        assertThat(activity.history().get(0).bookTitle()).isEqualTo("1984");
+        assertThat(activity.history().get(0).status()).isEqualTo(LoanStatus.RETURNED);
         assertThat(activity.totalElements()).isEqualTo(1L);
         assertThat(activity.hasSearch()).isFalse();
     }
 
     @Test
+    @DisplayName("getLoanActivity handles empty data")
     void getLoanActivity_handlesEmptyData() {
-        when(empruntRepository.findAllWithDetails()).thenReturn(List.of());
+        when(empruntRepository.findActiveLoans()).thenReturn(List.of());
+        when(empruntRepository.findHistoryPaged(isNull(), isNull(), isNull(), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(empruntRepository.countHistoryFiltered(isNull(), isNull(), isNull())).thenReturn(0L);
 
         LoanActivity activity = loanActivityService.getLoanActivity();
 
@@ -107,221 +112,144 @@ class LoanActivityServiceTest {
         assertThat(activity.hasSearch()).isFalse();
     }
 
-    // ---- new tests: filtering ----
+    // ---- Search filtering ----
 
     @Test
-    void getLoanActivity_filtersHistoryByUserName() {
-        Emprunt h1 = createHistoryEntry(1L, "Alice", "Dune", 60, 30);
-        Emprunt h2 = createHistoryEntry(2L, "Bob", "1984", 50, 20);
-        Emprunt h3 = createHistoryEntry(3L, "Alicia", "Fondation", 40, 10);
+    @DisplayName("getLoanActivity passes search filters to repository for active loans")
+    void getLoanActivity_filtersActiveLoansBySearch() {
+        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
 
-        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(h1, h2, h3));
+        when(empruntRepository.findActiveLoansFiltered("%ali%", null)).thenReturn(List.of(actif));
+        when(empruntRepository.findHistoryPaged(eq("%ali%"), isNull(), isNull(), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(empruntRepository.countHistoryFiltered(eq("%ali%"), isNull(), isNull())).thenReturn(0L);
 
         LoanActivity activity = loanActivityService.getLoanActivity("Ali", null, 0);
 
-        assertThat(activity.history()).hasSize(2);
-        assertThat(activity.history()).extracting(LoanHistory::userName)
-                .containsExactlyInAnyOrder("Alice", "Alicia");
-        assertThat(activity.totalElements()).isEqualTo(2L);
+        assertThat(activity.activeLoans()).hasSize(1);
         assertThat(activity.hasSearch()).isTrue();
     }
 
     @Test
-    void getLoanActivity_filtersHistoryByBookTitle() {
-        Emprunt h1 = createHistoryEntry(1L, "Alice", "Dune", 60, 30);
-        Emprunt h2 = createHistoryEntry(2L, "Bob", "Fondation", 50, 20);
+    @DisplayName("getLoanActivity passes search filters to repository for history")
+    void getLoanActivity_filtersHistoryBySearch() {
+        Emprunt hist = createHistoryEntry(1L, "Alice", "Dune", 60, 30);
 
-        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(h1, h2));
+        when(empruntRepository.findActiveLoansFiltered("%ali%", null)).thenReturn(List.of());
+        when(empruntRepository.findHistoryPaged(eq("%ali%"), isNull(), isNull(), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of(hist)));
+        when(empruntRepository.countHistoryFiltered(eq("%ali%"), isNull(), isNull())).thenReturn(1L);
 
-        LoanActivity activity = loanActivityService.getLoanActivity(null, "dun", 0);
-
-        assertThat(activity.history()).hasSize(1);
-        assertThat(activity.history().get(0).bookTitle()).isEqualTo("Dune");
-        assertThat(activity.totalElements()).isEqualTo(1L);
-    }
-
-    @Test
-    void getLoanActivity_combinesUserAndBookFilters() {
-        Emprunt h1 = createHistoryEntry(1L, "Alice", "Dune", 60, 30);
-        Emprunt h2 = createHistoryEntry(2L, "Bob", "Dune", 50, 20);
-        Emprunt h3 = createHistoryEntry(3L, "Alice", "Fondation", 40, 10);
-
-        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(h1, h2, h3));
-
-        LoanActivity activity = loanActivityService.getLoanActivity("alice", "dune", 0);
+        LoanActivity activity = loanActivityService.getLoanActivity("Ali", null, 0);
 
         assertThat(activity.history()).hasSize(1);
         assertThat(activity.history().get(0).userName()).isEqualTo("Alice");
-        assertThat(activity.history().get(0).bookTitle()).isEqualTo("Dune");
-    }
-
-    @Test
-    void getLoanActivity_returnsEmptyHistoryWhenNoMatch() {
-        Emprunt h1 = createHistoryEntry(1L, "Alice", "Dune", 60, 30);
-
-        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(h1));
-
-        LoanActivity activity = loanActivityService.getLoanActivity("Zorro", null, 0);
-
-        assertThat(activity.history()).isEmpty();
-        assertThat(activity.totalElements()).isEqualTo(0L);
+        assertThat(activity.totalElements()).isEqualTo(1L);
         assertThat(activity.hasSearch()).isTrue();
     }
 
     @Test
-    void getLoanActivity_doesNotFilterActiveLoans() {
+    @DisplayName("getLoanActivity ignores blank search terms")
+    void getLoanActivity_ignoresBlankSearchTerms() {
         Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
 
-        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(actif));
-
-        LoanActivity activity = loanActivityService.getLoanActivity("Zorro", "Aucun", 0);
-
-        assertThat(activity.activeLoans()).hasSize(1);
-        assertThat(activity.history()).isEmpty();
-    }
-
-    @Test
-    void getLoanActivity_ignoresBlankSearchTerms() {
-        Emprunt h1 = createHistoryEntry(1L, "Alice", "Dune", 60, 30);
-        Emprunt h2 = createHistoryEntry(2L, "Bob", "1984", 50, 20);
-
-        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(h1, h2));
+        when(empruntRepository.findActiveLoans()).thenReturn(List.of(actif));
+        when(empruntRepository.findHistoryPaged(isNull(), isNull(), isNull(), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(empruntRepository.countHistoryFiltered(isNull(), isNull(), isNull())).thenReturn(0L);
 
         LoanActivity activity = loanActivityService.getLoanActivity("   ", null, 0);
 
-        assertThat(activity.history()).hasSize(2);
+        assertThat(activity.activeLoans()).hasSize(1);
         assertThat(activity.hasSearch()).isFalse();
     }
 
-    // ---- new tests: pagination ----
+    // ---- Status filtering ----
 
     @Test
-    void getLoanActivity_paginatesHistory() {
-        List<Emprunt> historyEntries = new ArrayList<>();
-        for (int i = 1; i <= 25; i++) {
-            historyEntries.add(createHistoryEntry(
-                    (long) i, "User" + i, "Book" + i, 60 - i, 30 - i));
-        }
-
-        when(empruntRepository.findAllWithDetails()).thenReturn(historyEntries);
-
-        LoanActivity page1 = loanActivityService.getLoanActivity(null, null, 0);
-
-        assertThat(page1.history()).hasSize(10);
-        assertThat(page1.page()).isEqualTo(0);
-        assertThat(page1.totalPages()).isEqualTo(3);
-        assertThat(page1.totalElements()).isEqualTo(25L);
-
-        LoanActivity page3 = loanActivityService.getLoanActivity(null, null, 2);
-        assertThat(page3.history()).hasSize(5);
-        assertThat(page3.page()).isEqualTo(2);
-    }
-
-    @Test
-    void getLoanActivity_clampsPageToValidRange() {
-        List<Emprunt> historyEntries = List.of(
-                createHistoryEntry(1L, "Alice", "Dune", 60, 30));
-
-        when(empruntRepository.findAllWithDetails()).thenReturn(historyEntries);
-
-        LoanActivity activity = loanActivityService.getLoanActivity(null, null, 99);
-
-        assertThat(activity.page()).isEqualTo(0);
-        assertThat(activity.history()).hasSize(1);
-    }
-
-    // ---- new tests: status filtering ----
-
-    @Test
-    void getLoanActivity_filterActifs_showsOnlyActiveLoansWithoutOverdue() {
+    @DisplayName("filter actifs shows only non-overdue active loans")
+    void getLoanActivity_filterActifs_showsOnlyActiveWithoutOverdue() {
         Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
-        actif.setDateRetourPrevue(LocalDate.now().plusDays(25)); // not overdue
-
+        actif.setDateRetourPrevue(LocalDate.now().plusDays(25));
         Emprunt enRetard = createActiveEntry(2L, "Bob", "1984", 40);
-        enRetard.setDateRetourPrevue(LocalDate.now().minusDays(10)); // overdue
+        enRetard.setDateRetourPrevue(LocalDate.now().minusDays(10));
 
-        Emprunt historique = createHistoryEntry(3L, "Charlie", "Fondation", 60, 30);
-
-        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(actif, enRetard, historique));
+        when(empruntRepository.findActiveLoans()).thenReturn(List.of(actif, enRetard));
+        when(empruntRepository.findHistoryPaged(isNull(), isNull(), isNull(), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(empruntRepository.countHistoryFiltered(isNull(), isNull(), isNull())).thenReturn(0L);
 
         LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, "actifs");
 
         assertThat(activity.activeLoans()).hasSize(1);
-        assertThat(activity.activeLoans().get(0).empruntId()).isEqualTo(1L);
         assertThat(activity.activeLoans().get(0).status()).isEqualTo(LoanStatus.ACTIVE);
-        assertThat(activity.history()).isEmpty();
     }
 
     @Test
-    void getLoanActivity_filterEnRetard_showsOnlyOverdueActiveLoans() {
+    @DisplayName("filter en_retard shows only overdue active loans")
+    void getLoanActivity_filterEnRetard_showsOnlyOverdue() {
         Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
         actif.setDateRetourPrevue(LocalDate.now().plusDays(25));
-
         Emprunt enRetard = createActiveEntry(2L, "Bob", "1984", 40);
         enRetard.setDateRetourPrevue(LocalDate.now().minusDays(10));
 
-        Emprunt historique = createHistoryEntry(3L, "Charlie", "Fondation", 60, 30);
-
-        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(actif, enRetard, historique));
+        when(empruntRepository.findActiveLoans()).thenReturn(List.of(actif, enRetard));
+        when(empruntRepository.findHistoryPaged(isNull(), isNull(), isNull(), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(empruntRepository.countHistoryFiltered(isNull(), isNull(), isNull())).thenReturn(0L);
 
         LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, "en_retard");
 
         assertThat(activity.activeLoans()).hasSize(1);
-        assertThat(activity.activeLoans().get(0).empruntId()).isEqualTo(2L);
         assertThat(activity.activeLoans().get(0).status()).isEqualTo(LoanStatus.OVERDUE);
-        assertThat(activity.history()).isEmpty();
     }
 
     @Test
+    @DisplayName("filter termines shows only returned-on-time history")
     void getLoanActivity_filterTermines_showsOnlyReturnedLoans() {
-        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
-
-        // returned on time: expected=now+10, returned=now-5 (returned before expected)
         Emprunt rendu = createHistoryEntry(2L, "Bob", "1984", 60, 5);
         rendu.setDateRetourPrevue(LocalDate.now().plusDays(10));
 
-        // returned late: expected=now-50, returned=now-30 (returned after expected)
-        Emprunt renduEnRetard = createHistoryEntry(3L, "Charlie", "Fondation", 60, 30);
-        renduEnRetard.setDateRetourPrevue(LocalDate.now().minusDays(50));
-
-        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(actif, rendu, renduEnRetard));
+        when(empruntRepository.findActiveLoans()).thenReturn(List.of());
+        when(empruntRepository.findHistoryPaged(isNull(), isNull(), eq("termines"), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of(rendu)));
+        when(empruntRepository.countHistoryFiltered(isNull(), isNull(), eq("termines"))).thenReturn(1L);
 
         LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, "termines");
 
         assertThat(activity.activeLoans()).isEmpty();
         assertThat(activity.history()).hasSize(1);
-        assertThat(activity.history().get(0).empruntId()).isEqualTo(2L);
         assertThat(activity.history().get(0).status()).isEqualTo(LoanStatus.RETURNED);
     }
 
     @Test
-    void getLoanActivity_filterRendusEnRetard_showsOnlyLateReturnedLoans() {
-        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
-
-        // returned on time: expected=now+10, returned=now-5
-        Emprunt rendu = createHistoryEntry(2L, "Bob", "1984", 60, 5);
-        rendu.setDateRetourPrevue(LocalDate.now().plusDays(10));
-
-        // returned late: expected=now-50, returned=now-30
+    @DisplayName("filter rendus_en_retard shows only late-returned history")
+    void getLoanActivity_filterRendusEnRetard_showsOnlyLateReturned() {
         Emprunt renduEnRetard = createHistoryEntry(3L, "Charlie", "Fondation", 60, 30);
         renduEnRetard.setDateRetourPrevue(LocalDate.now().minusDays(50));
 
-        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(actif, rendu, renduEnRetard));
+        when(empruntRepository.findActiveLoans()).thenReturn(List.of());
+        when(empruntRepository.findHistoryPaged(isNull(), isNull(), eq("rendus_en_retard"), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of(renduEnRetard)));
+        when(empruntRepository.countHistoryFiltered(isNull(), isNull(), eq("rendus_en_retard"))).thenReturn(1L);
 
         LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, "rendus_en_retard");
 
         assertThat(activity.activeLoans()).isEmpty();
         assertThat(activity.history()).hasSize(1);
-        assertThat(activity.history().get(0).empruntId()).isEqualTo(3L);
         assertThat(activity.history().get(0).status()).isEqualTo(LoanStatus.LATE_RETURN);
     }
 
     @Test
-    void getLoanActivity_filterTous_showsAllLoansLikeDefault() {
+    @DisplayName("filter tous shows both active loans and history")
+    void getLoanActivity_filterTous_showsActiveAndHistory() {
         Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
-        Emprunt historique = createHistoryEntry(2L, "Bob", "1984", 60, 30);
+        Emprunt hist = createHistoryEntry(2L, "Bob", "1984", 60, 30);
 
-        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(actif, historique));
+        when(empruntRepository.findActiveLoans()).thenReturn(List.of(actif));
+        when(empruntRepository.findHistoryPaged(isNull(), isNull(), isNull(), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of(hist)));
+        when(empruntRepository.countHistoryFiltered(isNull(), isNull(), isNull())).thenReturn(1L);
 
         LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, "tous");
 
@@ -329,22 +257,31 @@ class LoanActivityServiceTest {
         assertThat(activity.history()).hasSize(1);
     }
 
+    // ---- Pagination ----
+
     @Test
-    void getLoanActivity_nullStatut_behavesLikeTous() {
-        Emprunt actif = createActiveEntry(1L, "Alice", "Dune", 5);
-        Emprunt historique = createHistoryEntry(2L, "Bob", "1984", 60, 30);
+    @DisplayName("pagination is handled by repository")
+    void getLoanActivity_paginationHandledByRepository() {
+        PageRequest pageRequest = PageRequest.of(2, 10);
+        Emprunt hist = createHistoryEntry(1L, "Alice", "Dune", 60, 30);
 
-        when(empruntRepository.findAllWithDetails()).thenReturn(List.of(actif, historique));
+        when(empruntRepository.findActiveLoans()).thenReturn(List.of());
+        when(empruntRepository.findHistoryPaged(isNull(), isNull(), isNull(), eq(pageRequest)))
+                .thenReturn(new PageImpl<>(List.of(hist), pageRequest, 25));
+        when(empruntRepository.countHistoryFiltered(isNull(), isNull(), isNull())).thenReturn(25L);
 
-        LoanActivity activity = loanActivityService.getLoanActivity(null, null, 0, null);
+        LoanActivity activity = loanActivityService.getLoanActivity(null, null, 2);
 
-        assertThat(activity.activeLoans()).hasSize(1);
         assertThat(activity.history()).hasSize(1);
+        assertThat(activity.page()).isEqualTo(2);
+        assertThat(activity.totalPages()).isEqualTo(3);
+        assertThat(activity.totalElements()).isEqualTo(25L);
     }
 
-    // ---- new tests: count methods ----
+    // ---- Count methods ----
 
     @Test
+    @DisplayName("countActiveLoans delegates to repository")
     void countActiveLoans_delegatesToRepository() {
         when(empruntRepository.countByDateRetourIsNull()).thenReturn(5L);
 
@@ -352,14 +289,15 @@ class LoanActivityServiceTest {
     }
 
     @Test
-    void countOverdueLoans_countsActiveLoansPastExpectedReturnDate() {
+    @DisplayName("countOverdueLoans delegates to repository")
+    void countOverdueLoans_delegatesToRepository() {
         when(empruntRepository.countByDateRetourIsNullAndDateRetourPrevueBefore(LocalDate.now()))
                 .thenReturn(3L);
 
         assertThat(loanActivityService.countOverdueLoans()).isEqualTo(3L);
     }
 
-    // ---- helpers ----
+    // ---- Helpers ----
 
     private Emprunt createHistoryEntry(Long id, String userName, String bookTitle,
                                        int daysSinceBorrow, int daysSinceReturn) {
