@@ -6,10 +6,12 @@ import com.bibliotheque.model.activite.LoanActivity;
 import com.bibliotheque.model.activite.LoanHistory;
 import com.bibliotheque.model.activite.LoanStatus;
 import com.bibliotheque.repository.EmpruntRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -33,57 +35,32 @@ public class LoanActivityService {
     }
 
     public LoanActivity getLoanActivity(String searchUser, String searchBook, int page, String statut) {
-        List<Emprunt> all = empruntRepository.findAllWithDetails();
-
-        List<ActiveLoan> activeLoans = new ArrayList<>();
-        List<LoanHistory> history = new ArrayList<>();
-
+        boolean hasSearch = isNotBlank(searchUser) || isNotBlank(searchBook);
         String effectiveStatut = (statut == null || statut.isBlank()) ? "tous" : statut;
 
-        for (Emprunt e : all) {
-            if (e.estEnCours()) {
-                activeLoans.add(toActiveLoan(e));
-            } else {
-                history.add(toLoanHistory(e));
-            }
-        }
+        // Fetch active loans (no pagination)
+        List<Emprunt> activeEmprunts = fetchActiveLoans(searchUser, searchBook);
 
-        // Apply status filter
-        switch (effectiveStatut) {
-            case "actifs" -> {
-                activeLoans.removeIf(a -> a.status() == LoanStatus.OVERDUE);
-                history.clear();
-            }
-            case "en_retard" -> {
-                activeLoans.removeIf(a -> a.status() != LoanStatus.OVERDUE);
-                history.clear();
-            }
-            case "termines" -> {
-                activeLoans.clear();
-                history.removeIf(h -> h.status() != LoanStatus.RETURNED);
-            }
-            case "rendus_en_retard" -> {
-                activeLoans.clear();
-                history.removeIf(h -> h.status() != LoanStatus.LATE_RETURN);
-            }
-            // "tous" — no filter
-        }
+        // Fetch history with pagination
+        String historyStatut = toHistoryStatut(effectiveStatut);
+        PageRequest pageRequest = PageRequest.of(page, DEFAULT_PAGE_SIZE);
+        Page<Emprunt> historyPage = empruntRepository.findHistoryPaged(
+                normalizedSearch(searchUser), normalizedSearch(searchBook), historyStatut, pageRequest);
+        long totalHistory = empruntRepository.countHistoryFiltered(
+                normalizedSearch(searchUser), normalizedSearch(searchBook), historyStatut);
 
-        boolean hasSearch = isNotBlank(searchUser) || isNotBlank(searchBook);
+        // Map active loans (filtered by status if needed)
+        List<ActiveLoan> activeLoans = mapActiveLoans(activeEmprunts, effectiveStatut);
 
-        if (hasSearch) {
-            history = filterHistory(history, searchUser, searchBook);
-        }
+        // Map history
+        List<LoanHistory> history = historyPage.getContent().stream()
+                .map(LoanActivityService::toLoanHistory)
+                .toList();
 
-        int totalFiltered = history.size();
-        int totalPages = Math.max(1, (int) Math.ceil((double) totalFiltered / DEFAULT_PAGE_SIZE));
-        int safePage = Math.max(0, Math.min(page, totalPages - 1));
-        int fromIndex = safePage * DEFAULT_PAGE_SIZE;
-        int toIndex = Math.min(fromIndex + DEFAULT_PAGE_SIZE, totalFiltered);
+        int safePage = historyPage.getNumber();
+        int totalPages = historyPage.getTotalPages();
 
-        List<LoanHistory> pagedHistory = history.subList(fromIndex, toIndex);
-
-        return new LoanActivity(activeLoans, pagedHistory, safePage, totalPages, totalFiltered, hasSearch);
+        return new LoanActivity(activeLoans, history, safePage, totalPages, totalHistory, hasSearch);
     }
 
     public long countActiveLoans() {
@@ -91,20 +68,45 @@ public class LoanActivityService {
     }
 
     public long countOverdueLoans() {
-        return empruntRepository.countByDateRetourIsNullAndDateRetourPrevueBefore(java.time.LocalDate.now());
+        return empruntRepository.countByDateRetourIsNullAndDateRetourPrevueBefore(LocalDate.now());
     }
 
-    private List<LoanHistory> filterHistory(List<LoanHistory> history, String searchUser, String searchBook) {
-        String userLower = isNotBlank(searchUser) ? searchUser.toLowerCase().trim() : null;
-        String bookLower = isNotBlank(searchBook) ? searchBook.toLowerCase().trim() : null;
+    private List<Emprunt> fetchActiveLoans(String searchUser, String searchBook) {
+        if (isNotBlank(searchUser) || isNotBlank(searchBook)) {
+            return empruntRepository.findActiveLoansFiltered(
+                    normalizedSearch(searchUser), normalizedSearch(searchBook));
+        }
+        return empruntRepository.findActiveLoans();
+    }
 
-        return history.stream()
-                .filter(h -> {
-                    boolean userMatch = userLower == null || h.userName().toLowerCase().contains(userLower);
-                    boolean bookMatch = bookLower == null || h.bookTitle().toLowerCase().contains(bookLower);
-                    return userMatch && bookMatch;
-                })
+    private String toHistoryStatut(String statut) {
+        return switch (statut) {
+            case "termines", "rendus_en_retard" -> statut;
+            default -> null; // "tous", "actifs", "en_retard" → no history filter
+        };
+    }
+
+    private List<ActiveLoan> mapActiveLoans(List<Emprunt> emprunts, String statut) {
+        List<ActiveLoan> all = emprunts.stream()
+                .map(LoanActivityService::toActiveLoan)
                 .toList();
+
+        return switch (statut) {
+            case "actifs" -> all.stream()
+                    .filter(a -> a.status() == LoanStatus.ACTIVE)
+                    .toList();
+            case "en_retard" -> all.stream()
+                    .filter(a -> a.status() == LoanStatus.OVERDUE)
+                    .toList();
+            default -> all; // "tous" — show all active
+        };
+    }
+
+    private static String normalizedSearch(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return "%" + value.trim().toLowerCase() + "%";
     }
 
     private static ActiveLoan toActiveLoan(Emprunt e) {

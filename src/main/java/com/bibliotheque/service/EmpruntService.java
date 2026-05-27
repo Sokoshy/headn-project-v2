@@ -49,7 +49,7 @@ public class EmpruntService {
     }
 
     public List<Emprunt> findActifs() {
-        return empruntRepository.findEmpruntsActifs();
+        return empruntRepository.findActiveLoans();
     }
 
     public List<Emprunt> findHistorique() {
