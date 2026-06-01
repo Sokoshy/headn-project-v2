@@ -1,7 +1,10 @@
 package com.bibliotheque.web;
 
+import com.bibliotheque.config.CurrentAgentProvider;
 import com.bibliotheque.exception.BusinessException;
+import com.bibliotheque.model.Agent;
 import com.bibliotheque.model.Emprunt;
+import com.bibliotheque.service.AuditService;
 import com.bibliotheque.service.EmpruntService;
 import com.bibliotheque.service.LoanActivityService;
 import com.bibliotheque.service.LoanPreparationService;
@@ -22,13 +25,19 @@ public class EmpruntController {
     private final EmpruntService empruntService;
     private final LoanActivityService loanActivityService;
     private final LoanPreparationService loanPreparationService;
+    private final AuditService auditService;
+    private final CurrentAgentProvider currentAgentProvider;
 
     public EmpruntController(EmpruntService empruntService,
                               LoanActivityService loanActivityService,
-                              LoanPreparationService loanPreparationService) {
+                              LoanPreparationService loanPreparationService,
+                              AuditService auditService,
+                              CurrentAgentProvider currentAgentProvider) {
         this.empruntService = empruntService;
         this.loanActivityService = loanActivityService;
         this.loanPreparationService = loanPreparationService;
+        this.auditService = auditService;
+        this.currentAgentProvider = currentAgentProvider;
     }
 
     @GetMapping("/emprunts")
@@ -49,6 +58,7 @@ public class EmpruntController {
     @GetMapping("/emprunts/{id}")
     public String voir(@PathVariable("id") Long id, Model model) {
         model.addAttribute("emprunt", empruntService.findDetailById(id));
+        model.addAttribute("auditEntries", auditService.historiquePourEmprunt(id));
         return "emprunts/detail";
     }
 
@@ -58,7 +68,8 @@ public class EmpruntController {
                         @RequestParam(value = "dateRetourPrevue", required = false) LocalDate dateRetourPrevue,
                         RedirectAttributes redirectAttributes) {
         try {
-            Emprunt emprunt = empruntService.creer(utilisateurId, livreId, dateRetourPrevue);
+            Agent agent = currentAgentProvider.getCurrentAgent();
+            Emprunt emprunt = empruntService.creer(utilisateurId, livreId, dateRetourPrevue, agent);
             redirectAttributes.addFlashAttribute("success",
                     "Emprunt enregistré : \"" + emprunt.getLivre().getTitre() +
                     "\" par " + emprunt.getUtilisateur().getNom());
@@ -74,7 +85,9 @@ public class EmpruntController {
                                             @RequestParam(value = "dateRetourPrevue", required = false) LocalDate dateRetourPrevue,
                                             RedirectAttributes redirectAttributes) {
         try {
+            Agent agent = currentAgentProvider.getCurrentAgent();
             Emprunt emprunt = empruntService.corrigerDateRetourPrevue(id, dateRetourPrevue);
+            auditService.enregistrer(emprunt, agent, com.bibliotheque.model.AuditAction.DATE_CORRECTION);
             redirectAttributes.addFlashAttribute("success",
                     "Date de retour prévue mise à jour pour \"" + emprunt.getLivre().getTitre() + "\"");
             return "redirect:/emprunts/" + id;
@@ -87,7 +100,8 @@ public class EmpruntController {
     @PostMapping("/emprunts/{id}/retour")
     public String effectuerRetour(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
         try {
-            Emprunt emprunt = empruntService.effectuerRetour(id);
+            Agent agent = currentAgentProvider.getCurrentAgent();
+            Emprunt emprunt = empruntService.effectuerRetour(id, agent);
             redirectAttributes.addFlashAttribute("success",
                     "Retour enregistré pour \"" + emprunt.getLivre().getTitre() + "\"");
             return "redirect:/emprunts";

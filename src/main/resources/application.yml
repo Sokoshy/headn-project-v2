@@ -43,8 +43,8 @@ server:
   servlet:
     context-path: /bibliotheque
   error:
-    include-message: always
-    include-binding-errors: always
+    include-message: never
+    include-binding-errors: never
     path: /error
     whitelabel:
       enabled: false
