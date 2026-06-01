@@ -9,9 +9,11 @@ Migrated from legacy Java Servlet/JSP to a modern stack.
 
 **Architecture:** Classic layered — `controller` → `service` → `repository` → `entity`, with Thymeleaf templates and a custom CSS design system.
 
-**Modules:** Accueil (Home), Livres (Books), Utilisateurs (Users), Emprunts (Loans).
+**Modules:** Accueil (Home), Livres (Books), Utilisateurs (Users), Emprunts (Loans), Agents (Staff), Audit (Audit Trail).
 
-All phases of a 10-phase migration plan are completed. The project is production-ready with 151 passing tests.
+All phases of a 10-phase migration plan are completed. The project is production-ready with 260 passing tests.
+
+**Available features:** Account system (Agent entity, login, LIBRARIAN/ADMIN roles, audit trail for loans). See `docs/account-system-plan.md` for details.
 
 ---
 
@@ -24,16 +26,19 @@ All phases of a 10-phase migration plan are completed. The project is production
 ├── docker-compose.yml         # PostgreSQL 17
 ├── init.sql                   # Seed data (8 books, 5 users, sample loans)
 ├── REFACTORING_PLAN.md        # Full migration plan & completion criteria
+├── CONTEXT.md                 # Domain vocabulary and glossary
 ├── docs/                      # Phase deliverables (phase-0 through phase-9)
+│   ├── adr/                   # Architecture Decision Records
+│   └── account-system-plan.md # Account system implementation plan
 │
 ├── src/main/java/com/bibliotheque/
 │   ├── BibliothequeApplication.java    # @SpringBootApplication entry point
-│   ├── config/                         # SecurityConfig, FlywayConfig, ValidationUtil
+│   ├── config/                         # SecurityConfig (with login), AgentDetailsService, CurrentAgentProvider, FlywayConfig, ValidationUtil
 │   ├── exception/                      # BusinessException, LivreNotFoundException, etc.
-│   ├── model/                          # Livre, Utilisateur, Emprunt (JPA entities)
-│   ├── repository/                     # Spring Data JPA repositories
-│   ├── service/                        # Business logic (LivreService, UtilisateurService, EmpruntService)
-│   └── web/                            # Controllers, GlobalExceptionHandler, CustomErrorController, GlobalModelAttributes
+│   ├── model/                          # Livre, Utilisateur, Emprunt, Agent, AuditLoan (JPA entities)
+│   ├── repository/                     # Spring Data JPA repositories (Livre, Utilisateur, Emprunt, Agent, AuditLoan)
+│   ├── service/                        # Business logic (LivreService, UtilisateurService, EmpruntService, AgentService, AuditService)
+│   └── web/                            # Controllers (Livre, Utilisateur, Emprunt, Agent, Setup, Audit), GlobalExceptionHandler, CustomErrorController, GlobalModelAttributes
 │
 ├── src/main/resources/
 │   ├── application.yml                 # All Spring configuration
@@ -43,12 +48,20 @@ All phases of a 10-phase migration plan are completed. The project is production
 │   │   ├── livres/                     # Books: liste, formulaire, detail
 │   │   ├── utilisateurs/               # Users: liste, formulaire, detail
 │   │   ├── emprunts/                   # Loans: liste, detail
+│   │   ├── agents/                     # Agents: list, form, detail (admin only)
+│   │   ├── audit/                      # Audit: list with filters
+│   │   ├── login.html                  # Login page
+│   │   ├── setup.html                  # First admin setup
 │   │   └── error/                      # 401, 403, 404, 500
-│   ├── static/css/styles.css           # Complete design system (~1300 lines)
+│   ├── static/css/styles.css           # Complete design system (~1600 lines)
 │   └── db/migration/                   # Flyway migrations
 │       ├── V1__initial_schema.sql
 │       ├── V2__align_schema_with_jpa.sql
-│       └── V3__protect_loan_history_and_enforce_single_active_loan.sql
+│       ├── V3__protect_loan_history_and_enforce_single_active_loan.sql
+│       ├── V4__drop_disponible_column.sql
+│       ├── V5__add_expected_return_date.sql
+│       ├── V6__backfill_expected_return_date_and_make_required.sql
+│       └── V7__add_agents_and_audit_trail.sql
 │
 └── src/test/java/com/bibliotheque/
     ├── config/                         # ValidationUtilTest
@@ -112,7 +125,7 @@ The app is served at `http://localhost:8080/bibliotheque/`.
 - PostgreSQL 17 via Docker Compose (`docker-compose.yml`).
 - Port `5432`, database `bibliotheque`, user `admin`, password `password123`.
 - The container initializes via `init.sql` which seeds 8 books, 5 users, and sample loan records.
-- Flyway manages incremental schema changes (`V1`, `V2`, `V3`). Do not manually alter the schema; always add a new Flyway migration.
+- Flyway manages incremental schema changes (`V1` through `V7`). Do not manually alter the schema; always add a new Flyway migration.
 - `spring.jpa.hibernate.ddl-auto=validate` — Hibernate validates against Flyway-managed schema at startup.
 
 ### Important routes
@@ -137,7 +150,22 @@ The app is served at `http://localhost:8080/bibliotheque/`.
 | GET | `/emprunts` | Loan list (active + history) |
 | GET | `/emprunts/{id}` | Loan detail |
 | POST | `/emprunts` | Create loan |
+| POST | `/emprunts/{id}/date-retour-prevue` | Update expected return date |
 | POST | `/emprunts/{id}/retour` | Return a book |
+| GET | `/agents` | Agent list (admin only) |
+| GET | `/agents/new` | Create agent form (admin only) |
+| GET | `/agents/{id}` | Agent detail (admin only) |
+| GET | `/agents/{id}/edit` | Edit agent form (admin only) |
+| POST | `/agents` | Create agent (admin only) |
+| POST | `/agents/{id}` | Update agent (admin only) |
+| POST | `/agents/{id}/deactivate` | Deactivate agent (admin only) |
+| POST | `/agents/{id}/reactivate` | Reactivate agent (admin only) |
+| GET | `/setup` | First admin setup (only when no agents exist) |
+| POST | `/setup` | Create first admin (only when no agents exist) |
+| GET | `/audit` | Audit trail listing with filters |
+| GET | `/login` | Login page (Spring Security) |
+| POST | `/login` | Submit credentials (Spring Security) |
+| POST | `/logout` | Log out (Spring Security) |
 
 ### Key conventions
 
@@ -163,13 +191,17 @@ mise run test:all
 # or: mvn verify
 ```
 
-### Test suites (151 tests total)
+### Test suites (260 tests total)
 
 **Controllers** — `src/test/java/com/bibliotheque/web/`
 - `HomeControllerTest` — dashboard page, stats model
 - `LivreControllerTest` — CRUD, search, validation errors, delete with confirm
 - `UtilisateurControllerTest` — CRUD, search, email uniqueness, delete
 - `EmpruntControllerTest` — create loan, return, access denied on nonexistent
+- `EmpruntControllerTemplateTest` — view rendering for loan detail page
+- `AgentControllerTest` — CRUD with success/error branches, activate/deactivate
+- `SetupControllerTest` — first admin setup, redirect when agents exist
+- `AuditControllerTest` — audit trail listing with filters
 - `CustomErrorControllerTest` — custom error pages
 - `GlobalExceptionHandlerTest` — exception mapping to views
 
@@ -178,12 +210,16 @@ mise run test:all
 - `UtilisateurServiceTest` — creation, email normalization/uniqueness, deletion blocking
 - `EmpruntServiceTest` — loan creation, return, already-returned guard, duplicate guard
 - `EmpruntServicePostgresTest` — integration with real PostgreSQL via Testcontainers
+- `AgentServiceTest` — creation, password hashing, activation/deactivation
+- `AuditServiceTest` — audit trail recording and querying
+- `LoanActivityServiceTest` — loan activity/return workflow
+- `LoanPreparationServiceTest` — loan preparation helpers
 
 **Repositories** — `src/test/java/com/bibliotheque/repository/`
 - `LivreRepositoryPostgresTest` — findDisponibles, search, DDL import
 - `UtilisateurRepositoryPostgresTest` — findByEmail, search, DDL import
 - `EmpruntRepositoryPostgresTest` — CRUD, active loans, history, relationship cascade
-- `SchemaMigrationPostgresTest` — validates all 3 Flyway migrations apply cleanly
+- `SchemaMigrationPostgresTest` — validates all 7 Flyway migrations apply cleanly
 
 **Models** — `src/test/java/com/bibliotheque/model/`
 - `LivreTest` — equals/hashCode
@@ -192,6 +228,8 @@ mise run test:all
 
 **Config** — `src/test/java/com/bibliotheque/config/`
 - `ValidationUtilTest` — HTML sanitization order and edge cases
+- `AgentDetailsServiceTest` — email normalization, inactive-agent rejection, authority construction
+- `CurrentAgentProviderTest` — SecurityContext resolution, null auth, anonymous user, agent lookup
 
 ### Test patterns
 
@@ -281,8 +319,10 @@ The Spring Boot Maven Plugin packages a fat JAR. No external container needed.
 
 - **Spring Security** is configured in `SecurityConfig.java`.
 - **CSRF protection** active for all POST requests.
-- All routes currently permit all (`permitAll()`) — authentication is not enforced.
-- Form login and HTTP Basic are disabled.
+- **Mandatory login** — all routes require authentication.
+- **Role-based authorization** — LIBRARIAN (all except agent management) and ADMIN (all).
+- **Agent identification** — automatically captured from `SecurityContextHolder`.
+- **Setup flow** — `/setup` page for first admin (blocked when agents exist).
 - Custom error pages for 401 (unauthorized), 403 (forbidden), 404, 500.
 - `GlobalExceptionHandler` catches all exceptions, logs appropriately, returns user-friendly views.
 - `CustomErrorController` handles the `/error` path for unknown routes.
@@ -293,7 +333,7 @@ The Spring Boot Maven Plugin packages a fat JAR. No external container needed.
 ## Important Rules for Agents
 
 1. **Always check `AGENTS.md` first** when starting work on this project.
-2. **Never edit `init.sql` directly** — it's only for initial Docker seed data. Schema changes go through Flyway migrations (`V4__*.sql`, etc.).
+2. **Never edit `init.sql` directly** — it's only for initial Docker seed data. Schema changes go through Flyway migrations (`V8__*.sql`, etc.).
 3. **Always add CSRF tokens** to new POST forms.
 4. **Use `RedirectAttributes`** for user-facing messages, never raw `HttpSession`.
 5. **Do not bypass the service layer** — controllers must never contain business logic or repository calls.
@@ -302,6 +342,12 @@ The Spring Boot Maven Plugin packages a fat JAR. No external container needed.
 8. **Before adding a new dependency to `pom.xml`**, check if the Spring Boot starter for it already covers the need.
 9. **Flyway migrations must be backward-compatible** with existing data in any environment.
 10. **Test your changes** — run `mise run test` or at least the relevant test class.
-11. **Always notify before spawning a fork** — tell the user what the fork will do and why before launching it.
-12. **Communication language:** discuss in French with the user. All output files (code, docs, comments, commit messages) must be in English.
-13. **Atomic commits only** — one logical change per commit. Do not bundle unrelated changes together.
+11. **Communication language:** discuss in French with the user. All output files (code, docs, comments, commit messages) must be in English.
+12. **Atomic commits only** — one logical change per commit. Do not bundle unrelated changes together.
+13. **Agent identification:** always extract the current agent from `SecurityContextHolder`, never pass agent ID from forms.
+14. **Audit trail:** record audit entries for loan creation and return in the `audit_loans` table.
+15. **Role-based access:** use `@PreAuthorize` or URL-based authorization to restrict admin-only routes.
+16. **Setup flow:** `/setup` page is accessible only when no agents exist in the database.
+17. **Agent management:** admin-only routes for creating, editing, and deactivating agents.
+18. **Audit trail display:** show audit info per loan (created by X, returned by Y) and globally via `/audit` page with filters.
+19. **Navigation updates:** add Agents (admin only) and Audit links to the main navigation in `layout/main.html`.
