@@ -2,14 +2,18 @@ package com.bibliotheque.service;
 
 import com.bibliotheque.BibliothequeApplication;
 import com.bibliotheque.exception.LivreNonDisponibleException;
+import com.bibliotheque.model.Agent;
 import com.bibliotheque.model.Emprunt;
 import com.bibliotheque.model.Livre;
+import com.bibliotheque.model.Role;
 import com.bibliotheque.model.Utilisateur;
+import com.bibliotheque.repository.AgentRepository;
 import com.bibliotheque.repository.EmpruntRepository;
 import com.bibliotheque.repository.LivreRepository;
 import com.bibliotheque.repository.UtilisateurRepository;
 import com.bibliotheque.support.PostgresIntegrationTestBase;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,19 +38,25 @@ class EmpruntServicePostgresTest extends PostgresIntegrationTestBase {
     @Autowired
     private UtilisateurRepository utilisateurRepository;
 
+    @Autowired
+    private AgentRepository agentRepository;
+
     @BeforeEach
     void cleanDatabase() {
         empruntRepository.deleteAllInBatch();
         utilisateurRepository.deleteAllInBatch();
         livreRepository.deleteAllInBatch();
+        agentRepository.deleteAllInBatch();
     }
 
     @Test
+    @DisplayName("Création et retour d'emprunt avec contraintes PostgreSQL réelles")
     void createAndReturnLoanWorkWithRealPostgresConstraints() {
         Utilisateur utilisateur = utilisateurRepository.save(new Utilisateur("Alice", "alice-service@example.com"));
         Livre livre = livreRepository.save(new Livre("Dune", "Frank Herbert"));
+        Agent agent = agentRepository.save(new Agent("Alice", "alice-agent@example.com", "HASH", Role.LIBRARIAN));
 
-        Emprunt emprunt = empruntService.creer(utilisateur.getId(), livre.getId(), LocalDate.now().plusDays(30));
+        Emprunt emprunt = empruntService.creer(utilisateur.getId(), livre.getId(), LocalDate.now().plusDays(30), agent);
 
         Livre livreApresCreation = livreRepository.findById(livre.getId()).orElseThrow();
         assertThat(emprunt.getId()).isNotNull();
@@ -54,10 +64,10 @@ class EmpruntServicePostgresTest extends PostgresIntegrationTestBase {
         assertThat(livreRepository.findDisponibles()).isEmpty();
         assertThat(empruntRepository.countByDateRetourIsNull()).isEqualTo(1);
 
-        assertThatThrownBy(() -> empruntService.creer(utilisateur.getId(), livre.getId(), LocalDate.now().plusDays(30)))
+        assertThatThrownBy(() -> empruntService.creer(utilisateur.getId(), livre.getId(), LocalDate.now().plusDays(30), agent))
                 .isInstanceOf(LivreNonDisponibleException.class);
 
-        empruntService.effectuerRetour(emprunt.getId());
+        empruntService.effectuerRetour(emprunt.getId(), agent);
 
         Livre livreApresRetour = livreRepository.findById(livre.getId()).orElseThrow();
         assertThat(livreApresRetour.isDisponible()).isTrue();

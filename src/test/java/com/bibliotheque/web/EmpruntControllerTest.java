@@ -1,34 +1,45 @@
 package com.bibliotheque.web;
 
+import com.bibliotheque.config.CurrentAgentProvider;
 import com.bibliotheque.exception.EmpruntDejaRetourneException;
 import com.bibliotheque.exception.LivreNonDisponibleException;
+import com.bibliotheque.model.Agent;
 import com.bibliotheque.model.Emprunt;
 import com.bibliotheque.model.Livre;
+import com.bibliotheque.model.Role;
 import com.bibliotheque.model.Utilisateur;
 import com.bibliotheque.model.activite.ActiveLoan;
 import com.bibliotheque.model.activite.LoanActivity;
 import com.bibliotheque.model.activite.LoanHistory;
 import com.bibliotheque.model.activite.LoanStatus;
+import com.bibliotheque.model.audit.AuditEntry;
 import com.bibliotheque.model.preparation.LoanPreparation;
 import com.bibliotheque.model.preparation.SelectableBook;
 import com.bibliotheque.model.preparation.SelectableUser;
+import com.bibliotheque.service.AuditService;
 import com.bibliotheque.service.EmpruntService;
 import com.bibliotheque.service.LoanActivityService;
 import com.bibliotheque.service.LoanPreparationService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -51,18 +62,41 @@ class EmpruntControllerTest {
     @Mock
     private LoanPreparationService loanPreparationService;
 
+    @Mock
+    private AuditService auditService;
+
+    @Mock
+    private CurrentAgentProvider currentAgentProvider;
+
     private MockMvc mockMvc;
+
+    private Agent agent;
 
     @BeforeEach
     void setUp() {
+        agent = new Agent("Alice", "alice@bib.fr", "HASH", Role.LIBRARIAN);
+        agent.setId(1L);
+
         EmpruntController controller = new EmpruntController(empruntService, loanActivityService,
-                loanPreparationService);
+                loanPreparationService, auditService, currentAgentProvider);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
+
+        // Authenticated context
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        "alice@bib.fr", "n/a",
+                        List.of(new SimpleGrantedAuthority("ROLE_LIBRARIAN"))));
+    }
+
+    @AfterEach
+    void clear() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
+    @DisplayName("Liste : reçoit LoanActivity et LoanPreparation")
     void liste_recoitLoanActivityEtLoanPreparation() throws Exception {
         ActiveLoan actif = new ActiveLoan(10L, 1L, "Dune", 1L, "Alice",
                 LocalDate.now().minusDays(5), null, LoanStatus.ACTIVE);
@@ -86,6 +120,7 @@ class EmpruntControllerTest {
     }
 
     @Test
+    @DisplayName("Liste : passe les paramètres de recherche au service")
     void liste_passesSearchParamsToService() throws Exception {
         LoanActivity activity = new LoanActivity(List.of(), List.of(), 0, 1, 0L, true);
 
@@ -101,6 +136,7 @@ class EmpruntControllerTest {
     }
 
     @Test
+    @DisplayName("Liste : passe le paramètre de page au service")
     void liste_passesPageParamToService() throws Exception {
         LoanActivity activity = new LoanActivity(List.of(), List.of(), 2, 3, 25L, false);
 
@@ -112,26 +148,34 @@ class EmpruntControllerTest {
     }
 
     @Test
-    void voir_afficheLeDetail() throws Exception {
+    @DisplayName("Détail : affiche le détail avec l'audit")
+    void voir_afficheLeDetailAvecAudit() throws Exception {
         Livre livre = new Livre("Dune", "Frank Herbert");
         Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
         Emprunt emprunt = new Emprunt(utilisateur, livre);
         emprunt.setId(1L);
         when(empruntService.findDetailById(1L)).thenReturn(emprunt);
+        when(auditService.historiquePourEmprunt(1L)).thenReturn(List.of(
+                new AuditEntry(1L, 1L, "Dune", "Alice", 1L, "Alice", "alice@bib.fr",
+                        com.bibliotheque.model.AuditAction.CREATION, LocalDateTime.now())
+        ));
 
         mockMvc.perform(get("/emprunts/1"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("emprunts/detail"))
-                .andExpect(model().attribute("emprunt", emprunt));
+                .andExpect(model().attribute("emprunt", emprunt))
+                .andExpect(model().attributeExists("auditEntries"));
     }
 
     @Test
+    @DisplayName("Création : succès redirige vers la liste")
     void creer_succesRedirigeVersListe() throws Exception {
         Livre livre = new Livre("Dune", "Frank Herbert");
         Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
         Emprunt emprunt = new Emprunt(utilisateur, livre);
         emprunt.setId(1L);
-        when(empruntService.creer(eq(1L), eq(2L), any(LocalDate.class))).thenReturn(emprunt);
+        when(currentAgentProvider.getCurrentAgent()).thenReturn(agent);
+        when(empruntService.creer(eq(1L), eq(2L), any(LocalDate.class), eq(agent))).thenReturn(emprunt);
 
         mockMvc.perform(post("/emprunts")
                         .param("utilisateurId", "1")
@@ -144,8 +188,10 @@ class EmpruntControllerTest {
     }
 
     @Test
+    @DisplayName("Création : livre non disponible redirige avec erreur")
     void creer_livreNonDisponibleRedirigeAvecErreur() throws Exception {
-        when(empruntService.creer(eq(1L), eq(2L), any(LocalDate.class)))
+        when(currentAgentProvider.getCurrentAgent()).thenReturn(agent);
+        when(empruntService.creer(eq(1L), eq(2L), any(LocalDate.class), eq(agent)))
                 .thenThrow(new LivreNonDisponibleException("Dune"));
 
         mockMvc.perform(post("/emprunts")
@@ -159,12 +205,14 @@ class EmpruntControllerTest {
     }
 
     @Test
+    @DisplayName("Retour : succès redirige vers la liste")
     void effectuerRetour_succesRedirigeVersListe() throws Exception {
         Livre livre = new Livre("Dune", "Frank Herbert");
         Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
         Emprunt emprunt = new Emprunt(utilisateur, livre);
         emprunt.setId(1L);
-        when(empruntService.effectuerRetour(1L)).thenReturn(emprunt);
+        when(currentAgentProvider.getCurrentAgent()).thenReturn(agent);
+        when(empruntService.effectuerRetour(1L, agent)).thenReturn(emprunt);
 
         mockMvc.perform(post("/emprunts/1/retour")
                         .with(csrf()))
@@ -174,8 +222,10 @@ class EmpruntControllerTest {
     }
 
     @Test
+    @DisplayName("Retour : emprunt déjà retourné redirige avec erreur")
     void effectuerRetour_empruntDejaRetourneRedirigeAvecErreur() throws Exception {
-        when(empruntService.effectuerRetour(1L))
+        when(currentAgentProvider.getCurrentAgent()).thenReturn(agent);
+        when(empruntService.effectuerRetour(1L, agent))
                 .thenThrow(new EmpruntDejaRetourneException(1L));
 
         mockMvc.perform(post("/emprunts/1/retour")
@@ -186,12 +236,14 @@ class EmpruntControllerTest {
     }
 
     @Test
+    @DisplayName("Correction date : succès redirige vers le détail")
     void corrigerDateRetourPrevue_succesRedirigeVersDetail() throws Exception {
         Livre livre = new Livre("Dune", "Frank Herbert");
         Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
         Emprunt emprunt = new Emprunt(utilisateur, livre);
         emprunt.setId(1L);
         emprunt.setDateRetourPrevue(LocalDate.now().plusDays(30));
+        when(currentAgentProvider.getCurrentAgent()).thenReturn(agent);
         when(empruntService.corrigerDateRetourPrevue(eq(1L), any(LocalDate.class))).thenReturn(emprunt);
 
         mockMvc.perform(post("/emprunts/1/date-retour-prevue")
@@ -203,6 +255,7 @@ class EmpruntControllerTest {
     }
 
     @Test
+    @DisplayName("Correction date : erreur redirige vers le détail")
     void corrigerDateRetourPrevue_erreurRedirigeVersDetail() throws Exception {
         when(empruntService.corrigerDateRetourPrevue(eq(1L), any(LocalDate.class)))
                 .thenThrow(new com.bibliotheque.exception.DateRetourPrevueDansLePasseException());
@@ -216,6 +269,7 @@ class EmpruntControllerTest {
     }
 
     @Test
+    @DisplayName("Liste : passe le paramètre statut au service")
     void liste_passesStatutParamToService() throws Exception {
         LoanActivity activity = new LoanActivity(List.of(), List.of(), 0, 1, 0L, false);
 
@@ -228,6 +282,7 @@ class EmpruntControllerTest {
     }
 
     @Test
+    @DisplayName("Liste : le statut par défaut est 'tous'")
     void liste_passesStatutDefaultTous() throws Exception {
         LoanActivity activity = new LoanActivity(List.of(), List.of(), 0, 1, 0L, false);
 
