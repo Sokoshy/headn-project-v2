@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout ('Journal d\'audit', ~{::content})}">
+<head>
+    <title>Journal d'audit</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Journal d'audit</h1>
+                <p class="page-subtitle">Traçabilité des créations et retours d'emprunts</p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-6">
+            <div class="card-body">
+                <form th:action="@{/audit}" method="get" class="filters-form">
+                    <div class="form-group form-group-compact">
+                        <label for="agentId" class="form-label">Agent</label>
+                        <select id="agentId" name="agentId" class="form-input">
+                            <option value="">Tous les agents</option>
+                            <option th:each="a : ${agents}"
+                                    th:value="${a.id}"
+                                    th:text="${a.nom + ' (' + a.email + ')'}"
+                                    th:selected="${selectedAgentId != null and selectedAgentId == a.id}">Agent</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group form-group-compact">
+                        <label for="action" class="form-label">Action</label>
+                        <select id="action" name="action" class="form-input">
+                            <option value="">Toutes les actions</option>
+                            <option th:each="a : ${actions}"
+                                    th:value="${a.name()}"
+                                    th:text="${a.name() == 'CREATION' ? 'Création' : 'Retour'}"
+                                    th:selected="${selectedAction == a.name()}">Action</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group form-group-compact">
+                        <label for="from" class="form-label">Du</label>
+                        <input type="date" id="from" name="from" class="form-input" th:value="${selectedFrom}">
+                    </div>
+
+                    <div class="form-group form-group-compact">
+                        <label for="to" class="form-label">Au</label>
+                        <input type="date" id="to" name="to" class="form-input" th:value="${selectedTo}">
+                    </div>
+
+                    <div class="form-group form-group-compact form-group-submit">
+                        <button type="submit" class="btn btn-primary">Filtrer</button>
+                        <a th:href="@{/audit}" class="btn btn-secondary">Réinitialiser</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div th:if="${entries.isEmpty()}" class="empty-state">
+            <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <h3 class="empty-state-title">Aucune entrée d'audit</h3>
+            <p class="empty-state-text">Aucune action ne correspond aux filtres sélectionnés.</p>
+        </div>
+
+        <div th:unless="${entries.isEmpty()}" class="table-container">
+            <table class="table">
+                <caption class="sr-only">Journal d'audit des actions sur les emprunts</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Action</th>
+                        <th scope="col">Agent</th>
+                        <th scope="col">Emprunt</th>
+                        <th scope="col">Livre</th>
+                        <th scope="col">Utilisateur</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="entry : ${entries}">
+                        <td th:text="${#temporals.format(entry.dateAction(), 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</td>
+                        <td>
+                            <span th:if="${entry.action().name() == 'CREATION'}" class="badge badge-success">Création</span>
+                            <span th:if="${entry.action().name() == 'RETURN'}" class="badge badge-primary">Retour</span>
+                        </td>
+                        <td>
+                            <span th:text="${entry.agentName()}">Agent</span>
+                            <span class="text-muted" th:text="' (' + ${entry.agentEmail()} + ')'">email</span>
+                        </td>
+                        <td>
+                            <a th:if="${entry.loanId() != null}"
+                               th:href="@{/emprunts/{id}(id=${entry.loanId()})}"
+                               th:text="'#' + ${entry.loanId()}"
+                               class="link-primary">#1</a>
+                        </td>
+                        <td th:text="${entry.loanBookTitle()}">Titre</td>
+                        <td th:text="${entry.loanUserName()}">Utilisateur</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${totalPages > 1}" class="pagination">
+            <a th:if="${currentPage > 0}"
+               th:href="@{/audit(agentId=${selectedAgentId}, action=${selectedAction}, from=${selectedFrom}, to=${selectedTo}, page=${currentPage - 1})}"
+               class="btn btn-ghost">
+                ← Précédent
+            </a>
+            <span class="pagination-info" th:text="|Page ${currentPage + 1} sur ${totalPages}|">Page 1 sur 1</span>
+            <a th:if="${currentPage < totalPages - 1}"
+               th:href="@{/audit(agentId=${selectedAgentId}, action=${selectedAction}, from=${selectedFrom}, to=${selectedTo}, page=${currentPage + 1})}"
+               class="btn btn-ghost">
+                Suivant →
+            </a>
+        </div>
+    </div>
+</body>
+</html>
