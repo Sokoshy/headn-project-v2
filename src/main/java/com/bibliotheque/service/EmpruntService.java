@@ -3,6 +3,7 @@ package com.bibliotheque.service;
 import com.bibliotheque.exception.EmpruntDejaRetourneException;
 import com.bibliotheque.exception.EmpruntNotFoundException;
 import com.bibliotheque.exception.LivreNonDisponibleException;
+import com.bibliotheque.model.Agent;
 import com.bibliotheque.model.Emprunt;
 import com.bibliotheque.model.Livre;
 import com.bibliotheque.model.Utilisateur;
@@ -23,15 +24,18 @@ public class EmpruntService {
     private final LivreRepository livreRepository;
     private final LivreService livreService;
     private final UtilisateurService utilisateurService;
+    private final AuditService auditService;
 
     public EmpruntService(EmpruntRepository empruntRepository,
                           LivreRepository livreRepository,
                           LivreService livreService,
-                          UtilisateurService utilisateurService) {
+                          UtilisateurService utilisateurService,
+                          AuditService auditService) {
         this.empruntRepository = empruntRepository;
         this.livreRepository = livreRepository;
         this.livreService = livreService;
         this.utilisateurService = utilisateurService;
+        this.auditService = auditService;
     }
 
     public List<Emprunt> findAll() {
@@ -72,7 +76,7 @@ public class EmpruntService {
     }
 
     @Transactional
-    public Emprunt creer(Long utilisateurId, Long livreId, LocalDate dateRetourPrevue) {
+    public Emprunt creer(Long utilisateurId, Long livreId, LocalDate dateRetourPrevue, Agent agent) {
         if (dateRetourPrevue == null) {
             throw new com.bibliotheque.exception.DateRetourPrevueObligatoireException();
         }
@@ -89,11 +93,17 @@ public class EmpruntService {
         Emprunt emprunt = new Emprunt(utilisateur, livre);
         emprunt.setDateRetourPrevue(dateRetourPrevue);
 
+        Emprunt saved;
         try {
-            return empruntRepository.saveAndFlush(emprunt);
+            saved = empruntRepository.saveAndFlush(emprunt);
         } catch (DataIntegrityViolationException exception) {
             throw new LivreNonDisponibleException(livre.getTitre());
         }
+
+        if (agent != null) {
+            auditService.enregistrerCreation(saved, agent);
+        }
+        return saved;
     }
 
     @Transactional
@@ -117,7 +127,7 @@ public class EmpruntService {
     }
 
     @Transactional
-    public Emprunt effectuerRetour(Long empruntId) {
+    public Emprunt effectuerRetour(Long empruntId, Agent agent) {
         Emprunt emprunt = empruntRepository.findByIdWithDetails(empruntId)
                 .orElseThrow(() -> new EmpruntNotFoundException(empruntId));
 
@@ -126,7 +136,12 @@ public class EmpruntService {
         }
 
         emprunt.setDateRetour(LocalDate.now());
-        return empruntRepository.save(emprunt);
+        Emprunt saved = empruntRepository.save(emprunt);
+
+        if (agent != null) {
+            auditService.enregistrerRetour(saved, agent);
+        }
+        return saved;
     }
 
     public long countActifs() {

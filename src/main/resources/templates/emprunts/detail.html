@@ -129,6 +129,40 @@
             </div>
         </div>
 
+        <!-- Audit history -->
+        <div class="card mt-6" th:if="${auditEntries != null and !auditEntries.isEmpty()}">
+            <div class="card-header">
+                <h2 class="card-title">Historique d'audit</h2>
+            </div>
+            <div class="card-body">
+                <ul class="audit-timeline">
+                    <li th:each="entry : ${auditEntries}" class="audit-timeline-item">
+                        <div class="audit-timeline-marker">
+                            <svg th:if="${entry.action().name() == 'CREATION'}" class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            <svg th:if="${entry.action().name() == 'RETURN'}" class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <polyline points="9,14 4,9 9,4"/>
+                                <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+                            </svg>
+                        </div>
+                        <div class="audit-timeline-content">
+                            <div class="audit-timeline-header">
+                                <strong th:if="${entry.action().name() == 'CREATION'}">Création de l'emprunt</strong>
+                                <strong th:if="${entry.action().name() == 'RETURN'}">Retour de l'emprunt</strong>
+                                <span class="audit-timeline-date" th:text="${#temporals.format(entry.dateAction(), 'dd MMMM yyyy à HH:mm')}">01 janvier 2024 à 10:00</span>
+                            </div>
+                            <div class="audit-timeline-meta">
+                                Par <strong th:text="${entry.agentName()}">Alice</strong>
+                                <span class="text-muted" th:text="' (' + ${entry.agentEmail()} + ')'">(alice@bib.fr)</span>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
         <div class="mt-6">
             <a th:href="@{/emprunts}" class="btn btn-ghost">
                 <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">

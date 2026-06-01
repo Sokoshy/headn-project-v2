@@ -37,9 +37,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BusinessException.class)
-    public String handleBusinessException(BusinessException ex, RedirectAttributes redirectAttributes) {
+    public String handleBusinessException(BusinessException ex, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         logger.warn("Erreur métier: {}", ex.getMessage());
         redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        String referer = request.getHeader("Referer");
+        if (referer != null && !referer.isEmpty()) {
+            return "redirect:" + referer;
+        }
         return "redirect:/";
     }
 
@@ -55,27 +59,7 @@ public class GlobalExceptionHandler {
         modelAndView.setStatus(status);
         modelAndView.addObject("status", status.value());
         modelAndView.addObject("error", message);
-        modelAndView.addObject("currentPath", currentPath(request));
+        modelAndView.addObject("currentPath", RequestPaths.from(request));
         return modelAndView;
-    }
-
-    private String currentPath(HttpServletRequest request) {
-        if (request == null) {
-            return "/";
-        }
-
-        String requestUri = request.getRequestURI();
-        String contextPath = request.getContextPath();
-
-        if (requestUri == null || requestUri.isBlank()) {
-            return "/";
-        }
-
-        if (contextPath != null && !contextPath.isBlank() && requestUri.startsWith(contextPath)) {
-            String path = requestUri.substring(contextPath.length());
-            return path.isBlank() ? "/" : path;
-        }
-
-        return requestUri;
     }
 }

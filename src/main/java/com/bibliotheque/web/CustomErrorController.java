@@ -33,7 +33,7 @@ public class CustomErrorController {
         ModelAndView mav = new ModelAndView(determineViewName(status));
         mav.setStatus(status);
         mav.addObject("status", status.value());
-        mav.addObject("currentPath", currentPath(request));
+        mav.addObject("currentPath", RequestPaths.from(request));
 
         if (errorMessage != null && !errorMessage.isEmpty()) {
             mav.addObject("error", errorMessage);
@@ -62,25 +62,5 @@ public class CustomErrorController {
         } catch (Exception e) {
             return HttpStatus.INTERNAL_SERVER_ERROR;
         }
-    }
-
-    private String currentPath(HttpServletRequest request) {
-        if (request == null) {
-            return "/";
-        }
-
-        String requestUri = request.getRequestURI();
-        String contextPath = request.getContextPath();
-
-        if (requestUri == null || requestUri.isBlank()) {
-            return "/";
-        }
-
-        if (contextPath != null && !contextPath.isBlank() && requestUri.startsWith(contextPath)) {
-            String path = requestUri.substring(contextPath.length());
-            return path.isBlank() ? "/" : path;
-        }
-
-        return requestUri;
     }
 }
