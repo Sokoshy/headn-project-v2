@@ -40,6 +40,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -103,13 +104,13 @@ class EmpruntControllerTest {
         LoanHistory hist = new LoanHistory(20L, 2L, "1984", 2L, "Bob",
                 LocalDate.now().minusDays(60), LocalDate.now().minusDays(40),
                 LocalDate.now().minusDays(30), LoanStatus.RETURNED);
-        LoanActivity activity = new LoanActivity(List.of(actif), List.of(hist), 0, 1, 1L, false);
+        LoanActivity activity = new LoanActivity(List.of(actif), 1L, List.of(hist), 0, 1, 1L, 1L, false);
 
         SelectableBook book = new SelectableBook(1L, "Fondation", "Isaac Asimov");
         SelectableUser user = new SelectableUser(1L, "Alice");
         LoanPreparation preparation = new LoanPreparation(List.of(book), List.of(user), LocalDate.now().plusDays(30));
 
-        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(0), eq("tous"))).thenReturn(activity);
+        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(0), eq("tous"), eq("tous"))).thenReturn(activity);
         when(loanPreparationService.getPreparation()).thenReturn(preparation);
 
         mockMvc.perform(get("/emprunts"))
@@ -122,9 +123,9 @@ class EmpruntControllerTest {
     @Test
     @DisplayName("Liste : passe les paramètres de recherche au service")
     void liste_passesSearchParamsToService() throws Exception {
-        LoanActivity activity = new LoanActivity(List.of(), List.of(), 0, 1, 0L, true);
+        LoanActivity activity = new LoanActivity(List.of(), 0L, List.of(), 0, 1, 0L, 0L, true);
 
-        when(loanActivityService.getLoanActivity(eq("Alice"), eq("Dune"), eq(0), eq("tous"))).thenReturn(activity);
+        when(loanActivityService.getLoanActivity(eq("Alice"), eq("Dune"), eq(0), eq("tous"), eq("tous"))).thenReturn(activity);
         when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
 
         mockMvc.perform(get("/emprunts")
@@ -138,9 +139,9 @@ class EmpruntControllerTest {
     @Test
     @DisplayName("Liste : passe le paramètre de page au service")
     void liste_passesPageParamToService() throws Exception {
-        LoanActivity activity = new LoanActivity(List.of(), List.of(), 2, 3, 25L, false);
+        LoanActivity activity = new LoanActivity(List.of(), 0L, List.of(), 2, 3, 25L, 25L, false);
 
-        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(2), eq("tous"))).thenReturn(activity);
+        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(2), eq("tous"), eq("tous"))).thenReturn(activity);
         when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
 
         mockMvc.perform(get("/emprunts").param("page", "2"))
@@ -269,29 +270,95 @@ class EmpruntControllerTest {
     }
 
     @Test
-    @DisplayName("Liste : passe le paramètre statut au service")
-    void liste_passesStatutParamToService() throws Exception {
-        LoanActivity activity = new LoanActivity(List.of(), List.of(), 0, 1, 0L, false);
+    @DisplayName("Liste : passe le paramètre statutActif au service")
+    void liste_passesStatutActifParamToService() throws Exception {
+        LoanActivity activity = new LoanActivity(List.of(), 0L, List.of(), 0, 1, 0L, 0L, false);
 
-        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(0), eq("en_retard"))).thenReturn(activity);
+        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(0), eq("en_retard"), eq("tous"))).thenReturn(activity);
         when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
 
-        mockMvc.perform(get("/emprunts").param("statut", "en_retard"))
+        mockMvc.perform(get("/emprunts").param("statutActif", "en_retard"))
                 .andExpect(status().isOk())
-                .andExpect(model().attribute("statut", "en_retard"));
+                .andExpect(model().attribute("statutActif", "en_retard"))
+                .andExpect(model().attribute("statutHistorique", "tous"));
     }
 
     @Test
-    @DisplayName("Liste : le statut par défaut est 'tous'")
-    void liste_passesStatutDefaultTous() throws Exception {
-        LoanActivity activity = new LoanActivity(List.of(), List.of(), 0, 1, 0L, false);
+    @DisplayName("Liste : statutActif= en_retard est transmis au service avec statutHistorique par défaut")
+    void liste_statutActifEnRetard_forwardsOnlyActiveFilter() throws Exception {
+        LoanActivity activity = new LoanActivity(List.of(), 0L, List.of(), 0, 1, 0L, 0L, false);
 
-        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(0), eq("tous"))).thenReturn(activity);
+        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(0), eq("en_retard"), eq("tous")))
+                .thenReturn(activity);
+        when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
+
+        mockMvc.perform(get("/emprunts").param("statutActif", "en_retard"))
+                .andExpect(status().isOk());
+
+        verify(loanActivityService).getLoanActivity(isNull(), isNull(), eq(0), eq("en_retard"), eq("tous"));
+    }
+
+    @Test
+    @DisplayName("Liste : statutHistorique=termines est transmis au service avec statutActif par défaut")
+    void liste_statutHistoriqueTermines_forwardsOnlyHistoryFilter() throws Exception {
+        LoanActivity activity = new LoanActivity(List.of(), 0L, List.of(), 0, 1, 0L, 0L, false);
+
+        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(0), eq("tous"), eq("termines")))
+                .thenReturn(activity);
+        when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
+
+        mockMvc.perform(get("/emprunts").param("statutHistorique", "termines"))
+                .andExpect(status().isOk());
+
+        verify(loanActivityService).getLoanActivity(isNull(), isNull(), eq(0), eq("tous"), eq("termines"));
+    }
+
+    @Test
+    @DisplayName("Liste : statutActif et statutHistorique sont transmis simultanément au service")
+    void liste_bothFilters_areForwardedSimultaneously() throws Exception {
+        LoanActivity activity = new LoanActivity(List.of(), 0L, List.of(), 0, 1, 0L, 0L, false);
+
+        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(0), eq("en_retard"), eq("termines")))
+                .thenReturn(activity);
+        when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
+
+        mockMvc.perform(get("/emprunts")
+                        .param("statutActif", "en_retard")
+                        .param("statutHistorique", "termines"))
+                .andExpect(status().isOk());
+
+        verify(loanActivityService).getLoanActivity(isNull(), isNull(), eq(0), eq("en_retard"), eq("termines"));
+    }
+
+    @Test
+    @DisplayName("Liste : statutActif et statutHistorique sont exposés au modèle")
+    void liste_bothStatuses_areExposedInModel() throws Exception {
+        LoanActivity activity = new LoanActivity(List.of(), 0L, List.of(), 0, 1, 0L, 0L, false);
+
+        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(0), eq("en_retard"), eq("termines")))
+                .thenReturn(activity);
+        when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
+
+        mockMvc.perform(get("/emprunts")
+                        .param("statutActif", "en_retard")
+                        .param("statutHistorique", "termines"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("statutActif", "en_retard"))
+                .andExpect(model().attribute("statutHistorique", "termines"));
+    }
+
+    @Test
+    @DisplayName("Liste : le statutActif par défaut est 'tous'")
+    void liste_passesStatutActifDefaultTous() throws Exception {
+        LoanActivity activity = new LoanActivity(List.of(), 0L, List.of(), 0, 1, 0L, 0L, false);
+
+        when(loanActivityService.getLoanActivity(isNull(), isNull(), eq(0), eq("tous"), eq("tous"))).thenReturn(activity);
         when(loanPreparationService.getPreparation()).thenReturn(emptyPreparation());
 
         mockMvc.perform(get("/emprunts"))
                 .andExpect(status().isOk())
-                .andExpect(model().attribute("statut", "tous"));
+                .andExpect(model().attribute("statutActif", "tous"))
+                .andExpect(model().attribute("statutHistorique", "tous"));
     }
 
     private LoanPreparation emptyPreparation() {

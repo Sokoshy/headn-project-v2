@@ -44,14 +44,16 @@ public class EmpruntController {
     public String liste(@RequestParam(value = "searchUser", required = false) String searchUser,
                         @RequestParam(value = "searchBook", required = false) String searchBook,
                         @RequestParam(value = "page", defaultValue = "0") int page,
-                        @RequestParam(value = "statut", defaultValue = "tous") String statut,
+                        @RequestParam(value = "statutActif", defaultValue = "tous") String statutActif,
+                        @RequestParam(value = "statutHistorique", defaultValue = "tous") String statutHistorique,
                         Model model) {
         model.addAttribute("loanActivity",
-                loanActivityService.getLoanActivity(searchUser, searchBook, page, statut));
+                loanActivityService.getLoanActivity(searchUser, searchBook, page, statutActif, statutHistorique));
         model.addAttribute("loanPreparation", loanPreparationService.getPreparation());
         model.addAttribute("searchUser", searchUser);
         model.addAttribute("searchBook", searchBook);
-        model.addAttribute("statut", statut);
+        model.addAttribute("statutActif", statutActif);
+        model.addAttribute("statutHistorique", statutHistorique);
         return "emprunts/liste";
     }
 
