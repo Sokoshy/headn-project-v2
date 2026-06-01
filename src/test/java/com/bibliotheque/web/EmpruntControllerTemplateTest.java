@@ -41,13 +41,14 @@ class EmpruntControllerTemplateTest {
                 LocalDate.of(2026, 1, 15),
                 LoanStatus.RETURNED
         );
-        LoanActivity activity = new LoanActivity(List.of(), List.of(history), 0, 1, 1L, false);
+        LoanActivity activity = new LoanActivity(List.of(), 0L, List.of(history), 0, 1, 1L, 1L, false);
         LoanPreparation preparation = new LoanPreparation(List.of(), List.of(), LocalDate.of(2026, 2, 1));
 
         WebContext context = webContext(Map.of(
                 "loanActivity", activity,
                 "loanPreparation", preparation,
-                "statut", "termines",
+                "statutActif", "tous",
+                "statutHistorique", "termines",
                 "currentPath", "/emprunts",
                 "_csrf", new DefaultCsrfToken("X-CSRF-TOKEN", "_csrf", "test-token")
         ));
