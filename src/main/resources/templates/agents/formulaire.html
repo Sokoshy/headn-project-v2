@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout (${editMode} ? 'Modifier un agent' : 'Ajouter un agent', ~{::content})}">
+<head>
+    <title th:text="${editMode} ? 'Modifier un agent' : 'Ajouter un agent'">Formulaire</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title" th:text="${editMode} ? 'Modifier l\'agent' : 'Ajouter un agent'"></h1>
+                <p class="page-subtitle" th:text="${editMode} ? 'Modifiez les informations de l\'agent' : 'Remplissez les informations du nouvel agent'"></p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <form th:action="${editMode} ? @{/agents/{id}(id=${agentId})} : @{/agents}"
+                      th:object="${agent}"
+                      method="post">
+                    <input type="hidden" th:name="_csrf" th:value="${_csrf.token}">
+                    <div class="form-group">
+                        <label for="nom" class="form-label required">Nom</label>
+                        <input type="text"
+                               id="nom"
+                               th:field="*{nom}"
+                               class="form-input"
+                               placeholder="Nom complet"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email" class="form-label required">Email</label>
+                        <input type="email"
+                               id="email"
+                               th:field="*{email}"
+                               class="form-input"
+                               placeholder="adresse@exemple.com"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="role" class="form-label required">Rôle</label>
+                        <select id="role" th:field="*{role}" class="form-input" required>
+                            <option th:each="r : ${roles}" th:value="${r.name()}" th:text="${r.name() == 'ADMIN' ? 'Administrateur' : 'Bibliothécaire'}">Rôle</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telephone" class="form-label">Téléphone</label>
+                        <input type="tel"
+                               id="telephone"
+                               th:field="*{telephone}"
+                               class="form-input"
+                               placeholder="0102030405"
+                               autocomplete="tel">
+                    </div>
+
+                    <div th:unless="${editMode}" class="form-group">
+                        <label for="motDePasse" class="form-label required">Mot de passe</label>
+                        <input type="password"
+                               id="motDePasse"
+                               th:field="*{motDePasse}"
+                               class="form-input"
+                               placeholder="Au moins 8 caractères"
+                               minlength="8"
+                               required
+                               autocomplete="new-password">
+                    </div>
+
+                    <div th:unless="${editMode}" class="form-group">
+                        <label for="motDePasseConfirmation" class="form-label required">Confirmer le mot de passe</label>
+                        <input type="password"
+                               id="motDePasseConfirmation"
+                               th:field="*{motDePasseConfirmation}"
+                               class="form-input"
+                               placeholder="Saisissez à nouveau le mot de passe"
+                               minlength="8"
+                               required
+                               autocomplete="new-password">
+                    </div>
+
+                    <div th:if="${editMode}" class="form-group">
+                        <label for="motDePasse" class="form-label">Nouveau mot de passe (optionnel)</label>
+                        <input type="password"
+                               id="motDePasse"
+                               th:field="*{motDePasse}"
+                               class="form-input"
+                               placeholder="Laisser vide pour conserver le mot de passe actuel"
+                               minlength="8"
+                               autocomplete="new-password">
+                    </div>
+
+                    <div th:if="${editMode}" class="form-group">
+                        <label for="motDePasseConfirmation" class="form-label">Confirmer le nouveau mot de passe</label>
+                        <input type="password"
+                               id="motDePasseConfirmation"
+                               th:field="*{motDePasseConfirmation}"
+                               class="form-input"
+                               placeholder="Confirmation du nouveau mot de passe"
+                               minlength="8"
+                               autocomplete="new-password">
+                    </div>
+
+                    <div class="actions-bar mt-8">
+                        <a th:href="@{/agents}" class="btn btn-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-primary" th:text="${editMode} ? 'Enregistrer les modifications' : 'Ajouter l\'agent'">
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

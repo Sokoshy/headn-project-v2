@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout (title, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' - Bibliothèque'">Configuration - Bibliothèque</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Aller au contenu principal</a>
+
+    <header class="header">
+        <div class="header-container">
+            <span class="logo" aria-label="Bibliothèque">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+                <span class="logo-text">Bibliothèque</span>
+            </span>
+        </div>
+    </header>
+
+    <main id="main-content" class="main" tabindex="-1">
+        <div class="container container-narrow">
+            <div class="setup-banner">
+                <svg class="setup-banner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                <div>
+                    <h2 class="setup-banner-title">Configuration initiale</h2>
+                    <p class="setup-banner-text">Aucun agent n'a encore été créé. Créez le compte administrateur pour commencer.</p>
+                </div>
+            </div>
+
+            <div th:if="${error}" class="alert alert-error" role="alert" aria-live="assertive">
+                <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span th:text="${error}">Erreur</span>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="auth-title">Créer le compte administrateur</h1>
+                    <p class="auth-subtitle">Ce compte aura tous les droits sur l'application.</p>
+
+                    <form th:action="@{/setup}" method="post" class="form">
+                        <input type="hidden" th:name="_csrf" th:value="${_csrf.token}">
+                        <div class="form-group">
+                            <label for="nom" class="form-label required">Nom complet</label>
+                            <input type="text"
+                                   id="nom"
+                                   name="nom"
+                                   class="form-input"
+                                   placeholder="Votre nom"
+                                   th:value="${nom}"
+                                   required
+                                   autocomplete="name">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label required">Email</label>
+                            <input type="email"
+                                   id="email"
+                                   name="email"
+                                   class="form-input"
+                                   placeholder="admin@bib.fr"
+                                   th:value="${email}"
+                                   required
+                                   autocomplete="email">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="motDePasse" class="form-label required">Mot de passe</label>
+                            <input type="password"
+                                   id="motDePasse"
+                                   name="motDePasse"
+                                   class="form-input"
+                                   placeholder="Au moins 8 caractères"
+                                   minlength="8"
+                                   required
+                                   autocomplete="new-password">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="motDePasseConfirmation" class="form-label required">Confirmer le mot de passe</label>
+                            <input type="password"
+                                   id="motDePasseConfirmation"
+                                   name="motDePasseConfirmation"
+                                   class="form-input"
+                                   placeholder="Saisissez à nouveau le mot de passe"
+                                   minlength="8"
+                                   required
+                                   autocomplete="new-password">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <polyline points="20,6 9,17 4,12"/>
+                            </svg>
+                            Créer le compte administrateur
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer" role="contentinfo">
+        <div class="footer-container">
+            <p class="footer-text">Gestionnaire de Bibliothèque</p>
+        </div>
+    </footer>
+</body>
+</html>

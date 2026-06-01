@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout ('Agents', ~{::content})}">
+<head>
+    <title>Agents</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Agents</h1>
+                <p class="page-subtitle">Gérez les comptes des bibliothécaires et administrateurs</p>
+            </div>
+        </div>
+
+        <div class="actions-bar">
+            <div></div>
+            <a th:href="@{/agents/new}" class="btn btn-primary">
+                <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Nouvel agent
+            </a>
+        </div>
+
+        <div th:if="${agents.isEmpty()}" class="empty-state">
+            <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <h3 class="empty-state-title">Aucun agent</h3>
+            <p class="empty-state-text">Commencez par ajouter un agent.</p>
+            <a th:href="@{/agents/new}" class="btn btn-primary">Ajouter un agent</a>
+        </div>
+
+        <div th:unless="${agents.isEmpty()}" class="table-container">
+            <table class="table">
+                <caption class="sr-only">Liste des agents avec leur rôle, email, statut et actions disponibles</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Nom</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Rôle</th>
+                        <th scope="col">Statut</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="agent : ${agents}">
+                        <td>
+                            <a th:href="@{/agents/{id}(id=${agent.id})}"
+                               th:text="${agent.nom}"
+                               class="table-link-strong">
+                                Nom
+                            </a>
+                        </td>
+                        <td th:text="${agent.email}">email@example.com</td>
+                        <td>
+                            <span th:if="${agent.role.name() == 'ADMIN'}" class="badge badge-primary">
+                                Administrateur
+                            </span>
+                            <span th:if="${agent.role.name() == 'LIBRARIAN'}" class="badge badge-neutral">
+                                Bibliothécaire
+                            </span>
+                        </td>
+                        <td>
+                            <span th:if="${agent.actif}" class="badge badge-success">Actif</span>
+                            <span th:unless="${agent.actif}" class="badge badge-warning">Désactivé</span>
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <a th:href="@{/agents/{id}(id=${agent.id})}" class="btn btn-ghost btn-sm">Voir</a>
+                                <a th:href="@{/agents/{id}/edit(id=${agent.id})}" class="btn btn-ghost btn-sm">Modifier</a>
+                                <form th:if="${agent.actif}" th:action="@{/agents/{id}/deactivate(id=${agent.id})}" method="post" class="inline-form">
+                                    <input type="hidden" th:name="_csrf" th:value="${_csrf.token}">
+                                    <button type="submit"
+                                            class="btn btn-ghost btn-sm btn-text-warning"
+                                            onclick="return confirm('Êtes-vous sûr de vouloir désactiver cet agent ?')">
+                                        Désactiver
+                                    </button>
+                                </form>
+                                <form th:unless="${agent.actif}" th:action="@{/agents/{id}/reactivate(id=${agent.id})}" method="post" class="inline-form">
+                                    <input type="hidden" th:name="_csrf" th:value="${_csrf.token}">
+                                    <button type="submit" class="btn btn-ghost btn-sm btn-text-success">
+                                        Réactiver
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
