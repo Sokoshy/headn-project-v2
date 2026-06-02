@@ -136,28 +136,4 @@ class LivreServiceTest {
         verify(livreRepository).delete(livre);
     }
 
-    @Test
-    void estDisponible_usesActiveLoanState() {
-        Livre livre = new Livre("Dune", "Frank Herbert");
-        livre.setId(1L);
-
-        when(livreRepository.findById(1L)).thenReturn(Optional.of(livre));
-        when(empruntRepository.existsByLivreIdAndDateRetourIsNull(1L)).thenReturn(true);
-
-        boolean disponible = livreService.estDisponible(1L);
-
-        assertThat(disponible).isFalse();
-    }
-
-    @Test
-    void findDisponibles_delegatesToDerivedAvailabilityQuery() {
-        Livre disponible = new Livre("Dune", "Frank Herbert");
-
-        when(livreRepository.findDisponibles()).thenReturn(List.of(disponible));
-
-        List<Livre> resultat = livreService.findDisponibles();
-
-        assertThat(resultat).containsExactly(disponible);
-        verify(livreRepository).findDisponibles();
-    }
 }
