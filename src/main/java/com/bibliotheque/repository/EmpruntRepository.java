@@ -16,19 +16,7 @@ import org.springframework.data.domain.Pageable;
 @Repository
 public interface EmpruntRepository extends JpaRepository<Emprunt, Long> {
 
-    List<Emprunt> findByUtilisateur(Utilisateur utilisateur);
-
-    List<Emprunt> findByLivre(Livre livre);
-
-    List<Emprunt> findByDateRetourIsNull();
-
-    List<Emprunt> findByDateRetourIsNotNull();
-
     List<Emprunt> findByUtilisateurOrderByDateEmpruntDesc(Utilisateur utilisateur);
-
-    List<Emprunt> findByUtilisateurAndDateRetourIsNull(Utilisateur utilisateur);
-
-    List<Emprunt> findByLivreAndDateRetourIsNull(Livre livre);
 
     boolean existsByLivreAndDateRetourIsNull(Livre livre);
 
@@ -38,11 +26,9 @@ public interface EmpruntRepository extends JpaRepository<Emprunt, Long> {
 
     boolean existsByUtilisateur(Utilisateur utilisateur);
 
-    @Query("SELECT e FROM Emprunt e WHERE e.dateRetour IS NULL AND e.dateEmprunt < :date")
-    List<Emprunt> findEmpruntsEnRetard(@Param("date") LocalDate date);
+    long countByDateRetourIsNull();
 
-    @Query("SELECT e FROM Emprunt e JOIN FETCH e.utilisateur JOIN FETCH e.livre ORDER BY e.dateEmprunt DESC")
-    List<Emprunt> findAllWithDetails();
+    long countByDateRetourIsNullAndDateRetourPrevueBefore(LocalDate date);
 
     @Query("SELECT e FROM Emprunt e JOIN FETCH e.utilisateur JOIN FETCH e.livre WHERE e.dateRetour IS NULL ORDER BY e.dateEmprunt ASC")
     List<Emprunt> findActiveLoans();
@@ -55,18 +41,8 @@ public interface EmpruntRepository extends JpaRepository<Emprunt, Long> {
     List<Emprunt> findActiveLoansFiltered(@Param("searchUser") String searchUser,
                                           @Param("searchBook") String searchBook);
 
-    @Query("SELECT e FROM Emprunt e JOIN FETCH e.utilisateur JOIN FETCH e.livre WHERE e.dateRetour IS NOT NULL ORDER BY e.dateRetour DESC")
-    List<Emprunt> findHistorique();
-
     @Query("SELECT e FROM Emprunt e JOIN FETCH e.utilisateur JOIN FETCH e.livre WHERE e.id = :id")
     java.util.Optional<Emprunt> findByIdWithDetails(@Param("id") Long id);
-
-    long countByDateRetourIsNull();
-
-    @Query("SELECT COUNT(e) FROM Emprunt e WHERE e.dateRetour IS NULL AND e.dateEmprunt < :date")
-    long countEmpruntsEnRetard(@Param("date") LocalDate date);
-
-    long countByDateRetourIsNullAndDateRetourPrevueBefore(LocalDate date);
 
     @Query("SELECT e FROM Emprunt e JOIN FETCH e.utilisateur JOIN FETCH e.livre " +
            "WHERE e.dateRetour IS NOT NULL " +
