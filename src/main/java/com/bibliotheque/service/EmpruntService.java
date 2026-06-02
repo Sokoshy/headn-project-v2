@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -38,10 +37,6 @@ public class EmpruntService {
         this.auditService = auditService;
     }
 
-    public List<Emprunt> findAll() {
-        return empruntRepository.findAllWithDetails();
-    }
-
     public Emprunt findById(Long id) {
         return empruntRepository.findById(id)
                 .orElseThrow(() -> new EmpruntNotFoundException(id));
@@ -50,29 +45,6 @@ public class EmpruntService {
     public Emprunt findDetailById(Long id) {
         return empruntRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new EmpruntNotFoundException(id));
-    }
-
-    public List<Emprunt> findActifs() {
-        return empruntRepository.findActiveLoans();
-    }
-
-    public List<Emprunt> findHistorique() {
-        return empruntRepository.findHistorique();
-    }
-
-    public List<Emprunt> findByUtilisateur(Long utilisateurId) {
-        Utilisateur utilisateur = utilisateurService.findById(utilisateurId);
-        return empruntRepository.findByUtilisateurOrderByDateEmpruntDesc(utilisateur);
-    }
-
-    public List<Emprunt> findByLivre(Long livreId) {
-        Livre livre = livreService.findById(livreId);
-        return empruntRepository.findByLivre(livre);
-    }
-
-    public List<Emprunt> findEnRetard() {
-        LocalDate dateLimit = LocalDate.now().minusDays(30);
-        return empruntRepository.findEmpruntsEnRetard(dateLimit);
     }
 
     @Transactional
@@ -142,23 +114,6 @@ public class EmpruntService {
             auditService.enregistrerRetour(saved, agent);
         }
         return saved;
-    }
-
-    public long countActifs() {
-        return empruntRepository.countByDateRetourIsNull();
-    }
-
-    public long countEnRetard() {
-        return empruntRepository.countByDateRetourIsNullAndDateRetourPrevueBefore(LocalDate.now());
-    }
-
-    public long countTotal() {
-        return empruntRepository.count();
-    }
-
-    public boolean estEnCours(Long empruntId) {
-        Emprunt emprunt = findById(empruntId);
-        return emprunt.estEnCours();
     }
 
     private void verifierDisponibiliteLivre(Livre livre) {

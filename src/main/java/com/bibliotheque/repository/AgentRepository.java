@@ -15,6 +15,4 @@ public interface AgentRepository extends JpaRepository<Agent, Long> {
     boolean existsByEmail(String email);
 
     List<Agent> findByActifTrue();
-
-    long countByActifTrue();
 }
