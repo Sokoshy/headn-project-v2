@@ -28,10 +28,6 @@ public class AgentService {
         return agentRepository.findAll();
     }
 
-    public List<Agent> findActifs() {
-        return agentRepository.findByActifTrue();
-    }
-
     public Agent findById(Long id) {
         return agentRepository.findById(id)
                 .orElseThrow(() -> new AgentNotFoundException(id));

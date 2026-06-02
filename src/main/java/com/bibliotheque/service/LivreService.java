@@ -40,10 +40,6 @@ public class LivreService {
                 recherche.trim(), recherche.trim());
     }
 
-    public List<Livre> findDisponibles() {
-        return livreRepository.findDisponibles();
-    }
-
     @Transactional
     public Livre creer(Livre livre) {
         normaliserLivre(livre);
@@ -72,11 +68,6 @@ public class LivreService {
                     "SUPPRESSION_IMPOSSIBLE");
         }
         livreRepository.delete(livre);
-    }
-
-    public boolean estDisponible(Long id) {
-        findById(id);
-        return !empruntRepository.existsByLivreIdAndDateRetourIsNull(id);
     }
 
     public long countDisponibles() {

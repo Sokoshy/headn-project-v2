@@ -81,14 +81,6 @@ public class UtilisateurService {
         utilisateurRepository.delete(utilisateur);
     }
 
-    public boolean emailExiste(String email) {
-        String emailNormalise = normaliserEmail(email);
-        if (emailNormalise == null) {
-            return false;
-        }
-        return utilisateurRepository.existsByEmail(emailNormalise);
-    }
-
     public long countTotal() {
         return utilisateurRepository.count();
     }
