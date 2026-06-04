@@ -351,3 +351,19 @@ The Spring Boot Maven Plugin packages a fat JAR. No external container needed.
 17. **Agent management:** admin-only routes for creating, editing, and deactivating agents.
 18. **Audit trail display:** show audit info per loan (created by X, returned by Y) and globally via `/audit` page with filters.
 19. **Navigation updates:** add Agents (admin only) and Audit links to the main navigation in `layout/main.html`.
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs live in GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout — one `CONTEXT.md` at the repo root + `docs/adr/`. See `docs/agents/domain.md`.
