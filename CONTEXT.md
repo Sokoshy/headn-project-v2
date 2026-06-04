@@ -64,6 +64,20 @@ _Avoid_: Logs, action history
 A type of event recorded in the **Audit Trail**. Current actions are **Creation** (loan validation) and **Return** (book return validation).
 _Avoid_: Event, operation
 
+## Authentication
+
+**Agent Principal**:
+The authenticated identity of an **Agent** in the security context. An **Agent Principal** wraps the **Agent** entity and implements Spring Security's `UserDetails`. It is resolved automatically from the security context via `@AuthenticationPrincipal`.
+_Avoid_: Current user, authenticated user, session user
+
+**First-boot Guard**:
+A guard that redirects unauthenticated users to `/setup` when no **Agents** exist in the database. It prevents access to the login page when no credentials can be validated.
+_Avoid_: Setup redirect, empty database check
+
+**Login Module**:
+The set of components handling authentication: `SecurityConfig`, `AgentDetailsService`, `AgentPrincipal`, and the login template. It is distinct from authorization (role-based access control).
+_Avoid_: Auth module, security module
+
 ## Flagged Ambiguities
 
 **Return Date**:
