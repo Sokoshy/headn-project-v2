@@ -15,7 +15,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
@@ -46,6 +48,8 @@ class AgentDetailsServiceTest {
         assertEquals("hashedpassword", userDetails.getPassword());
         assertTrue(userDetails.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_LIBRARIAN")));
+        assertInstanceOf(AgentPrincipal.class, userDetails);
+        assertSame(agent, ((AgentPrincipal) userDetails).getAgent());
         verify(agentRepository).findByEmail("alice@bib.fr");
     }
 
