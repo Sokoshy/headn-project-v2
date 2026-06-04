@@ -118,10 +118,12 @@ class SecurityConfigIntegrationTest extends PostgresIntegrationTestBase {
     }
 
     @Test
-    @DisplayName("GET /livres non authentifié (Accept JSON) retourne 401 (entry point API)")
-    void getLivres_unauthentifieApiHeader_retourne401() throws Exception {
+    @DisplayName("GET /livres non authentifié (Accept JSON) redirige vers /login (LoginUrlAuthenticationEntryPoint)")
+    void getLivres_unauthentifieApiHeader_redirigeVersLogin() throws Exception {
         mockMvc.perform(get("/livres").header("Accept", "application/json"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().is3xxRedirection())
+                .andExpect(result -> assertThat(result.getResponse().getRedirectedUrl())
+                        .contains("/login"));
     }
 
     @Test
