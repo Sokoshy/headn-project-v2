@@ -1,11 +1,12 @@
 package com.bibliotheque.web;
 
-import com.bibliotheque.config.CurrentAgentProvider;
+import com.bibliotheque.config.AgentPrincipal;
 import com.bibliotheque.exception.BusinessException;
 import com.bibliotheque.model.Agent;
 import com.bibliotheque.model.Role;
 import com.bibliotheque.service.AgentForm;
 import com.bibliotheque.service.AgentService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,11 +23,9 @@ import java.util.List;
 public class AgentController {
 
     private final AgentService agentService;
-    private final CurrentAgentProvider currentAgentProvider;
 
-    public AgentController(AgentService agentService, CurrentAgentProvider currentAgentProvider) {
+    public AgentController(AgentService agentService) {
         this.agentService = agentService;
-        this.currentAgentProvider = currentAgentProvider;
     }
 
     @ModelAttribute("roles")
@@ -100,9 +99,11 @@ public class AgentController {
     }
 
     @PostMapping("/agents/{id}/deactivate")
-    public String desactiver(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+    public String desactiver(@PathVariable("id") Long id,
+                              @AuthenticationPrincipal AgentPrincipal principal,
+                              RedirectAttributes redirectAttributes) {
         try {
-            Agent currentAgent = currentAgentProvider.getCurrentAgent();
+            Agent currentAgent = principal.getAgent();
             if (currentAgent.getId().equals(id)) {
                 redirectAttributes.addFlashAttribute("error",
                         "Vous ne pouvez pas désactiver votre propre compte.");
