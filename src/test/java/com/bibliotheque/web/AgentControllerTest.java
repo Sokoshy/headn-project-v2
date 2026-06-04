@@ -1,6 +1,6 @@
 package com.bibliotheque.web;
 
-import com.bibliotheque.config.CurrentAgentProvider;
+import com.bibliotheque.config.AgentPrincipal;
 import com.bibliotheque.exception.AgentNotFoundException;
 import com.bibliotheque.exception.EmailAgentDejaUtiliseException;
 import com.bibliotheque.model.Agent;
@@ -13,6 +13,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -40,15 +43,13 @@ class AgentControllerTest {
     @Mock
     private AgentService agentService;
 
-    @Mock
-    private CurrentAgentProvider currentAgentProvider;
-
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        AgentController controller = new AgentController(agentService, currentAgentProvider);
+        AgentController controller = new AgentController(agentService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
@@ -178,7 +179,8 @@ class AgentControllerTest {
     void desactiver_existant_redirigeVersListe() throws Exception {
         Agent currentAgent = new Agent("Admin", "admin@bib.fr", "HASH", Role.ADMIN);
         currentAgent.setId(99L);
-        when(currentAgentProvider.getCurrentAgent()).thenReturn(currentAgent);
+        authenticateAs(currentAgent);
+
         Agent agent = nouvelAgent();
         when(agentService.findById(1L)).thenReturn(agent);
 
@@ -196,7 +198,8 @@ class AgentControllerTest {
     void desactiver_agentInexistant_redirigeAvecErreur() throws Exception {
         Agent currentAgent = new Agent("Admin", "admin@bib.fr", "HASH", Role.ADMIN);
         currentAgent.setId(99L);
-        when(currentAgentProvider.getCurrentAgent()).thenReturn(currentAgent);
+        authenticateAs(currentAgent);
+
         when(agentService.findById(1L)).thenThrow(new AgentNotFoundException(1L));
 
         mockMvc.perform(post("/agents/1/deactivate")
@@ -241,5 +244,11 @@ class AgentControllerTest {
         Agent alice = new Agent("Alice", "alice@bib.fr", "HASH", Role.LIBRARIAN);
         alice.setId(1L);
         return alice;
+    }
+
+    private static void authenticateAs(Agent agent) {
+        AgentPrincipal principal = new AgentPrincipal(agent);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, "n/a", principal.getAuthorities()));
     }
 }

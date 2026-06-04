@@ -1,6 +1,6 @@
 package com.bibliotheque.web;
 
-import com.bibliotheque.config.CurrentAgentProvider;
+import com.bibliotheque.config.AgentPrincipal;
 import com.bibliotheque.exception.EmpruntDejaRetourneException;
 import com.bibliotheque.exception.LivreNonDisponibleException;
 import com.bibliotheque.model.Agent;
@@ -28,8 +28,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -66,9 +66,6 @@ class EmpruntControllerTest {
     @Mock
     private AuditService auditService;
 
-    @Mock
-    private CurrentAgentProvider currentAgentProvider;
-
     private MockMvc mockMvc;
 
     private Agent agent;
@@ -79,16 +76,16 @@ class EmpruntControllerTest {
         agent.setId(1L);
 
         EmpruntController controller = new EmpruntController(empruntService, loanActivityService,
-                loanPreparationService, auditService, currentAgentProvider);
+                loanPreparationService, auditService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
 
-        // Authenticated context
+        // Authenticated context with AgentPrincipal
+        AgentPrincipal principal = new AgentPrincipal(agent);
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        "alice@bib.fr", "n/a",
-                        List.of(new SimpleGrantedAuthority("ROLE_LIBRARIAN"))));
+                new UsernamePasswordAuthenticationToken(principal, "n/a", principal.getAuthorities()));
     }
 
     @AfterEach
@@ -175,7 +172,6 @@ class EmpruntControllerTest {
         Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
         Emprunt emprunt = new Emprunt(utilisateur, livre);
         emprunt.setId(1L);
-        when(currentAgentProvider.getCurrentAgent()).thenReturn(agent);
         when(empruntService.creer(eq(1L), eq(2L), any(LocalDate.class), eq(agent))).thenReturn(emprunt);
 
         mockMvc.perform(post("/emprunts")
@@ -191,7 +187,6 @@ class EmpruntControllerTest {
     @Test
     @DisplayName("Création : livre non disponible redirige avec erreur")
     void creer_livreNonDisponibleRedirigeAvecErreur() throws Exception {
-        when(currentAgentProvider.getCurrentAgent()).thenReturn(agent);
         when(empruntService.creer(eq(1L), eq(2L), any(LocalDate.class), eq(agent)))
                 .thenThrow(new LivreNonDisponibleException("Dune"));
 
@@ -212,7 +207,6 @@ class EmpruntControllerTest {
         Utilisateur utilisateur = new Utilisateur("Alice", "alice@example.com");
         Emprunt emprunt = new Emprunt(utilisateur, livre);
         emprunt.setId(1L);
-        when(currentAgentProvider.getCurrentAgent()).thenReturn(agent);
         when(empruntService.effectuerRetour(1L, agent)).thenReturn(emprunt);
 
         mockMvc.perform(post("/emprunts/1/retour")
@@ -225,7 +219,6 @@ class EmpruntControllerTest {
     @Test
     @DisplayName("Retour : emprunt déjà retourné redirige avec erreur")
     void effectuerRetour_empruntDejaRetourneRedirigeAvecErreur() throws Exception {
-        when(currentAgentProvider.getCurrentAgent()).thenReturn(agent);
         when(empruntService.effectuerRetour(1L, agent))
                 .thenThrow(new EmpruntDejaRetourneException(1L));
 
@@ -244,7 +237,6 @@ class EmpruntControllerTest {
         Emprunt emprunt = new Emprunt(utilisateur, livre);
         emprunt.setId(1L);
         emprunt.setDateRetourPrevue(LocalDate.now().plusDays(30));
-        when(currentAgentProvider.getCurrentAgent()).thenReturn(agent);
         when(empruntService.corrigerDateRetourPrevue(eq(1L), any(LocalDate.class))).thenReturn(emprunt);
 
         mockMvc.perform(post("/emprunts/1/date-retour-prevue")

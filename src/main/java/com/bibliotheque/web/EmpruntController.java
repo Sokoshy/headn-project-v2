@@ -1,6 +1,6 @@
 package com.bibliotheque.web;
 
-import com.bibliotheque.config.CurrentAgentProvider;
+import com.bibliotheque.config.AgentPrincipal;
 import com.bibliotheque.exception.BusinessException;
 import com.bibliotheque.model.Agent;
 import com.bibliotheque.model.Emprunt;
@@ -8,6 +8,7 @@ import com.bibliotheque.service.AuditService;
 import com.bibliotheque.service.EmpruntService;
 import com.bibliotheque.service.LoanActivityService;
 import com.bibliotheque.service.LoanPreparationService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,18 +27,15 @@ public class EmpruntController {
     private final LoanActivityService loanActivityService;
     private final LoanPreparationService loanPreparationService;
     private final AuditService auditService;
-    private final CurrentAgentProvider currentAgentProvider;
 
     public EmpruntController(EmpruntService empruntService,
                               LoanActivityService loanActivityService,
                               LoanPreparationService loanPreparationService,
-                              AuditService auditService,
-                              CurrentAgentProvider currentAgentProvider) {
+                              AuditService auditService) {
         this.empruntService = empruntService;
         this.loanActivityService = loanActivityService;
         this.loanPreparationService = loanPreparationService;
         this.auditService = auditService;
-        this.currentAgentProvider = currentAgentProvider;
     }
 
     @GetMapping("/emprunts")
@@ -68,9 +66,10 @@ public class EmpruntController {
     public String creer(@ModelAttribute("utilisateurId") Long utilisateurId,
                         @ModelAttribute("livreId") Long livreId,
                         @RequestParam(value = "dateRetourPrevue", required = false) LocalDate dateRetourPrevue,
+                        @AuthenticationPrincipal AgentPrincipal principal,
                         RedirectAttributes redirectAttributes) {
         try {
-            Agent agent = currentAgentProvider.getCurrentAgent();
+            Agent agent = principal.getAgent();
             Emprunt emprunt = empruntService.creer(utilisateurId, livreId, dateRetourPrevue, agent);
             redirectAttributes.addFlashAttribute("success",
                     "Emprunt enregistré : \"" + emprunt.getLivre().getTitre() +
@@ -85,9 +84,10 @@ public class EmpruntController {
     @PostMapping("/emprunts/{id}/date-retour-prevue")
     public String corrigerDateRetourPrevue(@PathVariable("id") Long id,
                                             @RequestParam(value = "dateRetourPrevue", required = false) LocalDate dateRetourPrevue,
+                                            @AuthenticationPrincipal AgentPrincipal principal,
                                             RedirectAttributes redirectAttributes) {
         try {
-            Agent agent = currentAgentProvider.getCurrentAgent();
+            Agent agent = principal.getAgent();
             Emprunt emprunt = empruntService.corrigerDateRetourPrevue(id, dateRetourPrevue);
             auditService.enregistrer(emprunt, agent, com.bibliotheque.model.AuditAction.DATE_CORRECTION);
             redirectAttributes.addFlashAttribute("success",
@@ -100,9 +100,11 @@ public class EmpruntController {
     }
 
     @PostMapping("/emprunts/{id}/retour")
-    public String effectuerRetour(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+    public String effectuerRetour(@PathVariable("id") Long id,
+                                   @AuthenticationPrincipal AgentPrincipal principal,
+                                   RedirectAttributes redirectAttributes) {
         try {
-            Agent agent = currentAgentProvider.getCurrentAgent();
+            Agent agent = principal.getAgent();
             Emprunt emprunt = empruntService.effectuerRetour(id, agent);
             redirectAttributes.addFlashAttribute("success",
                     "Retour enregistré pour \"" + emprunt.getLivre().getTitre() + "\"");
