@@ -35,3 +35,6 @@ failsafe-reports/
 *.tmp
 *.swp
 *~
+
+# Docmaster
+.docmancer
